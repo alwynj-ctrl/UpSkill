@@ -1,0 +1,46 @@
+import type React from "react"
+import type { Metadata } from "next"
+
+import { Analytics } from "@vercel/analytics/next"
+import { Suspense } from "react"
+import "./globals.css"
+import { Inter, Roboto_Mono } from "next/font/google"
+
+// Initialize fonts
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-sans",
+  display: "swap",
+})
+
+const robotoMono = Roboto_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
+  display: "swap",
+})
+
+export const metadata: Metadata = {
+  title: "UpSkill Workforce - Professional Training & Development",
+  description: "Empowering individuals and organizations through high-quality, industry-relevant training programs.",
+  generator: "v0.app",
+}
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode
+}>) {
+  return (
+    <html lang="en" className={`${inter.variable} ${robotoMono.variable}`}>
+      <body className="font-sans">
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `document.documentElement.classList.add('dark')`,
+          }}
+        />
+        <Suspense fallback={null}>{children}</Suspense>
+        <Analytics />
+      </body>
+    </html>
+  )
+}
