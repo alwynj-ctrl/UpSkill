@@ -32,6 +32,41 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable} ${robotoMono.variable}`}>
+      <head>
+        <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, maximum-scale=1.0"/>
+        {/* Paytm JS Script */}
+        <script 
+          type="application/javascript" 
+          src="https://securegw.paytm.in/merchantpgpui/checkoutjs/merchants/uYTkMQ79093638871742.js" 
+          onLoad="onScriptLoad();" 
+          crossOrigin="anonymous"
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              function onScriptLoad(){
+                window.PaytmConfig = {
+                  "root": "",
+                  "flow": "DEFAULT",
+                  "data": {
+                    "orderId": "",
+                    "token": "",
+                    "tokenType": "TXN_TOKEN",
+                    "amount": ""
+                  },
+                  "handler": {
+                    "notifyMerchant": function(eventName,data){
+                      console.log("notifyMerchant handler function called");
+                      console.log("eventName => ",eventName);
+                      console.log("data => ",data);
+                    }
+                  }
+                };
+              }
+            `,
+          }}
+        />
+      </head>
       <body className="font-sans">
         <script
           dangerouslySetInnerHTML={{

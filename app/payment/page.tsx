@@ -7,7 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useState, useEffect } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
@@ -97,7 +96,6 @@ export default function PaymentPage() {
   const [selectedCourse, setSelectedCourse] = useState(null)
   const [customAmount, setCustomAmount] = useState("")
   const [useCustomAmount, setUseCustomAmount] = useState(false)
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isCheckingAuth, setIsCheckingAuth] = useState(true)
   const [userId, setUserId] = useState(null)
@@ -112,7 +110,6 @@ export default function PaymentPage() {
     pincode: "",
     specialRequirements: "",
   })
-  const [paymentMethod, setPaymentMethod] = useState("paytm") // Added payment method state, defaulting to Paytm
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -160,71 +157,45 @@ export default function PaymentPage() {
     setUseCustomAmount(true)
   }
 
-  const initiateAirpayPayment = async () => {
-    setIsProcessingPayment(true)
+  const handlePayment = async () => {
+    if (!selectedCourse || !userId) {
+      alert("Missing required information")
+      return
+    }
 
     try {
-      const supabase = createClient()
-      const { data: purchaseData, error: purchaseError } = await supabase
-        .from("purchases")
-        .insert({
-          user_id: userId,
-          course_name: selectedCourse.title,
-          course_price: finalAmount,
-          payment_status: "pending",
-        })
-        .select()
-        .single()
-
-      if (purchaseError) {
-        console.error("[v0] Error creating purchase record:", purchaseError)
-        alert("Failed to create purchase record. Please try again.")
-        setIsProcessingPayment(false)
-        return
+      const payButton = document.getElementById('pay-button') as HTMLButtonElement
+      if (payButton) {
+        payButton.disabled = true
+        payButton.textContent = 'Redirecting...'
       }
 
-      const response = await fetch("/api/airpay-payment", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+      const response = await fetch('/api/sabpaisa-initiate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           amount: finalAmount,
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          phone: formData.phone,
-          productInfo: selectedCourse.title,
-          address: formData.address,
-          city: formData.city,
-          state: formData.state,
-          pincode: formData.pincode,
-          purchaseId: purchaseData.id,
-          returnUrl: `${window.location.origin}/payment/success`,
-          cancelUrl: `${window.location.origin}/payment/failure`,
-        }),
+          courseId: selectedCourse.id,
+          userInfo: formData
+        })
       })
 
-      const result = await response.json()
-
-      if (!result.success) {
-        alert(result.error || "Payment initialization failed. Please try again.")
-        setIsProcessingPayment(false)
-        return
+      const data = await response.json()
+      if (!response.ok || !data?.success) {
+        throw new Error(data?.error || 'Failed to initiate SabPaisa payment')
       }
 
-      console.log("[v0] Initiating Airpay payment with proper encryption and checksum")
+      // Create and submit a form to SabPaisa
+      const form = document.createElement('form')
+      form.method = 'POST'
+      form.action = data.formAction
+      form.style.display = 'none'
 
-      const form = document.createElement("form")
-      form.method = "POST"
-      form.action = result.actionUrl
-      form.style.display = "none"
-
-      Object.entries(result.paymentData).forEach(([key, value]) => {
-        const input = document.createElement("input")
-        input.type = "hidden"
+      Object.entries<string>(data.fields).forEach(([key, value]) => {
+        const input = document.createElement('input')
+        input.type = 'hidden'
         input.name = key
-        input.value = value.toString()
+        input.value = value
         form.appendChild(input)
       })
 
@@ -533,58 +504,16 @@ export default function PaymentPage() {
               </div>
 
               <div className="pt-4 border-t">
-                <div className="mb-4">
-                  <Label className="text-base font-medium mb-3 block">Select Payment Method</Label>
-                  <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod}>
-                    <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-muted/50 cursor-pointer">
-                      <RadioGroupItem value="paytm" id="paytm" />
-                      <Label htmlFor="paytm" className="flex-1 cursor-pointer flex items-center gap-2">
-                        <div className="w-8 h-8 bg-blue-500 rounded flex items-center justify-center">
-                          <span className="text-white text-xs font-bold">PT</span>
-                        </div>
-                        <span>Paytm</span>
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-muted/50 cursor-pointer">
-                      <RadioGroupItem value="airpay" id="airpay" />
-                      <Label htmlFor="airpay" className="flex-1 cursor-pointer flex items-center gap-2">
-                        <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center">
-                          <span className="text-white text-xs font-bold">AP</span>
-                        </div>
-                        <span>Airpay</span>
-                      </Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-
                 <div className="bg-muted p-4 rounded-lg mb-4">
                   <h4 className="font-medium mb-2">Payment Summary</h4>
                   <div className="flex justify-between items-center">
                     <span>Total Amount:</span>
                     <span className="text-xl font-bold text-primary">₹{finalAmount.toLocaleString()}</span>
                   </div>
-                  <div className="mt-2 pt-2 border-t border-border/50">
-                    <div className="flex items-center gap-2">
-                      {paymentMethod === "paytm" ? (
-                        <>
-                          <div className="w-8 h-8 bg-blue-500 rounded flex items-center justify-center">
-                            <span className="text-white text-xs font-bold">PT</span>
-                          </div>
-                          <span className="text-sm text-muted-foreground">Secured by Paytm</span>
-                        </>
-                      ) : (
-                        <>
-                          <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center">
-                            <span className="text-white text-xs font-bold">AP</span>
-                          </div>
-                          <span className="text-sm text-muted-foreground">Secured by Airpay</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
                 </div>
 
                 <Button
+                  id="pay-button"
                   className="w-full"
                   size="lg"
                   onClick={handlePayment}
@@ -592,8 +521,7 @@ export default function PaymentPage() {
                     !formData.firstName ||
                     !formData.lastName ||
                     !formData.email ||
-                    !formData.phone ||
-                    isProcessingPayment
+                    !formData.phone
                   }
                 >
                   {isProcessingPayment
