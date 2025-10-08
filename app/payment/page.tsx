@@ -1,5 +1,18 @@
 "use client"
 
+// Extend Window interface for Paytm
+declare global {
+  interface Window {
+    Paytm: {
+      CheckoutJS: {
+        onLoad: (callback: () => void) => void
+        init: (config: any) => Promise<any>
+        invoke: () => void
+      }
+    }
+  }
+}
+
 import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
@@ -12,7 +25,29 @@ import { useState, useEffect } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 
-const courses = [
+interface Course {
+  id: string
+  title: string
+  price: number
+  image: string
+  description: string
+  duration: string
+  mode: string
+}
+
+interface FormData {
+  firstName: string
+  lastName: string
+  email: string
+  phone: string
+  address: string
+  city: string
+  state: string
+  pincode: string
+  specialRequirements: string
+}
+
+const courses: Course[] = [
   {
     id: "assessment-level-1",
     title: "Assessment Test - Level 1",
@@ -94,14 +129,14 @@ export default function PaymentPage() {
   const searchParams = useSearchParams()
   const courseId = searchParams.get("course")
   const router = useRouter()
-  const [selectedCourse, setSelectedCourse] = useState(null)
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
   const [customAmount, setCustomAmount] = useState("")
   const [useCustomAmount, setUseCustomAmount] = useState(false)
   const [isProcessingPayment, setIsProcessingPayment] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isCheckingAuth, setIsCheckingAuth] = useState(true)
-  const [userId, setUserId] = useState(null)
-  const [formData, setFormData] = useState({
+  const [userId, setUserId] = useState<string | null>(null)
+  const [formData, setFormData] = useState<FormData>({
     firstName: "",
     lastName: "",
     email: "",
@@ -148,14 +183,14 @@ export default function PaymentPage() {
     }
   }, [courseId])
 
-  const handleInputChange = (field, value) => {
+  const handleInputChange = (field: keyof FormData, value: string) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
     }))
   }
 
-  const handleCustomAmountChange = (value) => {
+  const handleCustomAmountChange = (value: string) => {
     setCustomAmount(value)
     setUseCustomAmount(true)
   }
@@ -260,6 +295,14 @@ export default function PaymentPage() {
         return
       }
 
+      console.log("[PayTM Form] Using working form-based payment:", {
+        amount: finalAmount,
+        email: formData.email,
+        phone: formData.phone,
+        purchaseId: purchaseData.id
+      })
+
+      // Use the WORKING form-based Paytm payment
       const response = await fetch("/api/paytm-payment", {
         method: "POST",
         headers: {
@@ -267,30 +310,33 @@ export default function PaymentPage() {
         },
         body: JSON.stringify({
           amount: finalAmount,
-          firstName: formData.firstName,
-          lastName: formData.lastName,
           email: formData.email,
           phone: formData.phone,
-          productInfo: selectedCourse.title,
-          address: formData.address,
-          city: formData.city,
-          state: formData.state,
-          pincode: formData.pincode,
           purchaseId: purchaseData.id,
-          returnUrl: `${window.location.origin}/payment/success`,
         }),
       })
 
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error("[PayTM JS] HTTP Error:", response.status, errorText)
+        alert(`Payment initialization failed (HTTP ${response.status}). Please try again.`)
+        setIsProcessingPayment(false)
+        return
+      }
+
       const result = await response.json()
+      console.log("[PayTM JS] Initiate API response:", result)
 
       if (!result.success) {
+        console.error("[PayTM Form] Payment initialization failed:", result.error)
         alert(result.error || "Payment initialization failed. Please try again.")
         setIsProcessingPayment(false)
         return
       }
 
-      console.log("[v0] Initiating Paytm payment with checksum")
+      console.log("[PayTM Form] Redirecting to Paytm payment gateway...")
 
+      // Create form and submit for working form-based payment
       const form = document.createElement("form")
       form.method = "POST"
       form.action = result.actionUrl
@@ -300,16 +346,115 @@ export default function PaymentPage() {
         const input = document.createElement("input")
         input.type = "hidden"
         input.name = key
-        input.value = value.toString()
+        input.value = String(value)
         form.appendChild(input)
       })
 
       document.body.appendChild(form)
       form.submit()
+      
     } catch (error) {
-      console.error("[v0] Paytm payment error:", error)
+      console.error("[PayTM Form] Payment error:", error)
       alert("Payment initialization failed. Please try again.")
       setIsProcessingPayment(false)
+    }
+  }
+
+  const loadPaytmJSCheckout = async (txnToken: string, orderId: string, amount: number, mid: string) => {
+    try {
+      // Remove any existing Paytm script
+      const existingScript = document.querySelector('script[src*="merchantpgpui"]')
+      if (existingScript) {
+        existingScript.remove()
+      }
+
+      console.log("[PayTM JS] Loading checkout with:", { txnToken, orderId, amount, mid })
+
+      // Determine host based on environment
+      const host = process.env.NODE_ENV === 'production' 
+        ? 'https://secure.paytmpayments.com' 
+        : 'https://securestage.paytmpayments.com'
+
+      return new Promise((resolve, reject) => {
+        // Create and load Paytm JS script
+        const script = document.createElement('script')
+        script.type = 'application/javascript'
+        script.src = `${host}/merchantpgpui/checkoutjs/merchants/${mid}.js`
+        script.crossOrigin = 'anonymous'
+        
+        script.onload = () => {
+          console.log("[PayTM JS] Script loaded successfully")
+          
+          // Configure Paytm checkout
+          const config = {
+            "root": "",
+            "flow": "DEFAULT",
+            "data": {
+              "orderId": orderId,
+              "token": txnToken,
+              "tokenType": "TXN_TOKEN",
+              "amount": amount.toString()
+            },
+            "handler": {
+              "notifyMerchant": function(eventName: string, data: any) {
+                console.log("[PayTM JS] Event:", eventName, "Data:", data)
+                
+                if (eventName === 'APP_CLOSED' || eventName === 'BACK_BUTTON_PRESSED') {
+                  setIsProcessingPayment(false)
+                  console.log("[PayTM JS] Payment cancelled by user")
+                }
+                
+                if (eventName === 'PAYMENT_SUCCESS') {
+                  console.log("[PayTM JS] Payment successful, redirecting...")
+                  window.location.href = `/payment/success?orderId=${orderId}&txnId=${data.txnId || ''}`
+                }
+                
+                if (eventName === 'PAYMENT_FAILED') {
+                  console.log("[PayTM JS] Payment failed")
+                  window.location.href = `/payment/failure?orderId=${orderId}&reason=${data.reason || 'Payment failed'}`
+                }
+              }
+            }
+          }
+
+          // Initialize and invoke Paytm checkout
+          if (window.Paytm && window.Paytm.CheckoutJS) {
+            window.Paytm.CheckoutJS.onLoad(function() {
+              console.log("[PayTM JS] Paytm CheckoutJS loaded")
+              
+              window.Paytm.CheckoutJS.init(config).then(function() {
+                console.log("[PayTM JS] Configuration initialized, invoking payment...")
+                window.Paytm.CheckoutJS.invoke()
+                resolve(true)
+              }).catch(function(error: any) {
+                console.error("[PayTM JS] Init error:", error)
+                alert("Payment initialization failed. Please try again.")
+                setIsProcessingPayment(false)
+                reject(error)
+              })
+            })
+          } else {
+            console.error("[PayTM JS] Paytm CheckoutJS not available")
+            alert("Payment system not available. Please try again.")
+            setIsProcessingPayment(false)
+            reject(new Error("Paytm CheckoutJS not available"))
+          }
+        }
+
+        script.onerror = (error) => {
+          console.error("[PayTM JS] Script loading error:", error)
+          alert("Payment system failed to load. Please try again.")
+          setIsProcessingPayment(false)
+          reject(error)
+        }
+
+        document.head.appendChild(script)
+      })
+      
+    } catch (error) {
+      console.error("[PayTM JS] LoadPaytmJSCheckout error:", error)
+      setIsProcessingPayment(false)
+      throw error
     }
   }
 
@@ -362,7 +507,16 @@ export default function PaymentPage() {
     )
   }
 
-  const finalAmount = useCustomAmount ? Number.parseFloat(customAmount) || selectedCourse.price : selectedCourse.price
+  const finalAmount = useCustomAmount 
+    ? Number.parseFloat(customAmount) || (selectedCourse?.price || 0) 
+    : (selectedCourse?.price || 0)
+
+  const getButtonText = () => {
+    if (isProcessingPayment) {
+      return paymentMethod === "paytm" ? "Redirecting to Paytm..." : "Redirecting to Airpay..."
+    }
+    return paymentMethod === "paytm" ? "Pay with Paytm" : "Pay with Airpay"
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -596,9 +750,7 @@ export default function PaymentPage() {
                     isProcessingPayment
                   }
                 >
-                  {isProcessingPayment
-                    ? `Redirecting to ${paymentMethod === "paytm" ? "Paytm" : "Airpay"}...`
-                    : `Pay with ${paymentMethod === "paytm" ? "Paytm" : "Airpay"}`}
+                  {getButtonText()}
                 </Button>
 
                 <p className="text-xs text-muted-foreground mt-2 text-center">
