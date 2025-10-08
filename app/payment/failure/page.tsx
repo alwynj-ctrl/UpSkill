@@ -11,21 +11,15 @@ import { useEffect, useState } from "react"
 
 export default function PaymentFailurePage() {
   const searchParams = useSearchParams()
-  const [paymentDetails, setPaymentDetails] = useState<{
-    transactionId: string | null
-    amount: string | null
-    orderId: string | null
-    status: string | null
-    message: string | null
-  } | null>(null)
+  const [paymentDetails, setPaymentDetails] = useState(null)
 
   useEffect(() => {
     // Extract payment details from URL parameters
-    const transactionId = searchParams.get("TRANSACTIONID") || searchParams.get("txnId")
-    const amount = searchParams.get("AMOUNT") || searchParams.get("amount")
-    const orderId = searchParams.get("ORDERID") || searchParams.get("orderId")
-    const status = searchParams.get("STATUS") || searchParams.get("status")
-    const message = searchParams.get("MESSAGE") || searchParams.get("reason") || searchParams.get("error")
+    const transactionId = searchParams.get("TRANSACTIONID")
+    const amount = searchParams.get("AMOUNT")
+    const orderId = searchParams.get("ORDERID")
+    const status = searchParams.get("STATUS")
+    const message = searchParams.get("MESSAGE")
 
     setPaymentDetails({
       transactionId,

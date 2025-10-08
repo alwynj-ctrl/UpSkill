@@ -25,8 +25,6 @@ export const metadata: Metadata = {
   generator: "v0.app",
 }
 
-export const viewport = "width=device-width, height=device-height, initial-scale=1.0, maximum-scale=1.0"
-
 export default function RootLayout({
   children,
 }: Readonly<{
