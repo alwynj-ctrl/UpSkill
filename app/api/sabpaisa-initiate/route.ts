@@ -9,27 +9,30 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { amount, courseId, userInfo } = body
 
+    console.log('SabPaisa initiate request:', { amount, courseId, userInfo })
+
     if (!amount || !userInfo?.email || !userInfo?.firstName) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
     const orderId = generateSabPaisaOrderId()
 
-    // Minimal required params; SabPaisa has more optional fields depending on setup
+    // SabPaisa form parameters - trying minimal required fields first
     const params: Record<string, string> = {
       clientCode: SABPAISA_CONFIG.CLIENT_CODE,
       transUserName: SABPAISA_CONFIG.USERNAME,
       transUserPassword: SABPAISA_CONFIG.PASSWORD,
       amount: Number(amount).toFixed(2),
-      spURL: SABPAISA_CONFIG.INIT_URL,
       accountNumber: orderId,
       payerName: `${userInfo.firstName} ${userInfo.lastName || ''}`.trim(),
       payerEmail: userInfo.email,
-      payerMobile: userInfo.phone || '',
+      payerMobile: userInfo.phone || '9999999999',
       programId: courseId || 'COURSE',
       returnUrl: SABPAISA_CONFIG.RETURN_URL,
       failureURL: SABPAISA_CONFIG.FAILURE_URL,
     }
+
+    console.log('SabPaisa params being sent:', params)
 
     return NextResponse.json({ success: true, orderId, formAction: SABPAISA_CONFIG.INIT_URL, fields: params })
   } catch (e) {

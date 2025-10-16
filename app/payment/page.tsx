@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useState, useEffect } from "react"
+import { submitPaymentForm } from "sabpaisa-pg-dev"
+import { SABPAISA_CONFIG, SABPAISA_STAGING, generateSabPaisaOrderId } from "@/lib/sabpaisa"
 import { useSearchParams, useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 
@@ -99,6 +101,8 @@ export default function PaymentPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isCheckingAuth, setIsCheckingAuth] = useState(true)
   const [userId, setUserId] = useState(null)
+  const [paymentMethod, setPaymentMethod] = useState("sabpaisa")
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false)
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -157,9 +161,12 @@ export default function PaymentPage() {
     setUseCustomAmount(true)
   }
 
-  const handlePayment = async () => {
+  const initiateSabpaisaPayment = async () => {
+    setIsProcessingPayment(true)
+
     if (!selectedCourse || !userId) {
       alert("Missing required information")
+      setIsProcessingPayment(false)
       return
     }
 
@@ -170,39 +177,45 @@ export default function PaymentPage() {
         payButton.textContent = 'Redirecting...'
       }
 
-      const response = await fetch('/api/sabpaisa-initiate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          amount: finalAmount,
-          courseId: selectedCourse.id,
-          userInfo: formData
-        })
-      })
+      const currentAmount = useCustomAmount ? Number.parseFloat(customAmount) || selectedCourse.price : selectedCourse.price
 
-      const data = await response.json()
-      if (!response.ok || !data?.success) {
-        throw new Error(data?.error || 'Failed to initiate SabPaisa payment')
+      const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost'
+      const useAuth = isLocalhost ? SABPAISA_STAGING : SABPAISA_CONFIG
+
+      const formState: Record<string, any> = {
+        clientCode: useAuth.CLIENT_CODE,
+        transUserName: useAuth.USERNAME,
+        transUserPassword: useAuth.PASSWORD,
+        authKey: useAuth.AUTH_KEY,
+        authIV: useAuth.AUTH_IV,
+        payerName: `${formData.firstName} ${formData.lastName}`.trim(),
+        payerEmail: formData.email,
+        payerMobile: formData.phone,
+        amount: currentAmount,
+        amountType: "INR",
+        // Use a hyphen-only clientTxnId like the vendor sample
+        clientTxnId: `${SABPAISA_CONFIG.CLIENT_CODE}-${Date.now()}`,
+        channelId: "npm",
+        // carry course/user context back in response for saving purchase
+        udf1: selectedCourse.id,
+        udf2: selectedCourse.title,
+        udf3: userId,
+        udf4: null, udf5: null,
+        udf6: null, udf7: null, udf8: null, udf9: null, udf10: null,
+        udf11: null, udf12: null, udf13: null, udf14: null, udf15: null,
+        udf16: null, udf17: null, udf18: null, udf19: null, udf20: null,
+        payerVpa: "", modeTransfer: "", byPassFlag: "",
+        cardHolderName: "", pan: "", cardExpMonth: "", cardExpYear: "", cardType: "", cvv: "",
+        browserDetails: "", bankId: "", env: isLocalhost ? "STAG" : "PROD",
+        callbackUrl: `${window.location.origin}/payment/response`,
       }
 
-      // Create and submit a form to SabPaisa
-      const form = document.createElement('form')
-      form.method = 'POST'
-      form.action = data.formAction
-      form.style.display = 'none'
-
-      Object.entries<string>(data.fields).forEach(([key, value]) => {
-        const input = document.createElement('input')
-        input.type = 'hidden'
-        input.name = key
-        input.value = value
-        form.appendChild(input)
-      })
-
-      document.body.appendChild(form)
-      form.submit()
+      // Persist for debugging since the page navigates to SabPaisa
+      try { localStorage.setItem('sabpaisa:lastPayload', JSON.stringify(formState)); } catch {}
+      console.log('[SabPaisa] Submitting SDK form with params:', formState)
+      submitPaymentForm(formState)
     } catch (error) {
-      console.error("[v0] Airpay payment error:", error)
+      console.error("[v0] SabPaisa payment error:", error)
       alert("Payment initialization failed. Please try again.")
       setIsProcessingPayment(false)
     }
@@ -212,13 +225,15 @@ export default function PaymentPage() {
     setIsProcessingPayment(true)
 
     try {
+      const currentAmount = useCustomAmount ? Number.parseFloat(customAmount) || selectedCourse.price : selectedCourse.price
+
       const supabase = createClient()
       const { data: purchaseData, error: purchaseError } = await supabase
         .from("purchases")
         .insert({
           user_id: userId,
           course_name: selectedCourse.title,
-          course_price: finalAmount,
+          course_price: currentAmount,
           payment_status: "pending",
         })
         .select()
@@ -237,7 +252,7 @@ export default function PaymentPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          amount: finalAmount,
+          amount: currentAmount,
           firstName: formData.firstName,
           lastName: formData.lastName,
           email: formData.email,
@@ -295,7 +310,7 @@ export default function PaymentPage() {
     if (paymentMethod === "paytm") {
       initiatePaytmPayment()
     } else {
-      initiateAirpayPayment()
+      initiateSabpaisaPayment()
     }
   }
 
@@ -504,6 +519,26 @@ export default function PaymentPage() {
               </div>
 
               <div className="pt-4 border-t">
+                <div className="mb-4">
+                  <Label className="text-base font-medium mb-2 block">Payment Method</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      variant={paymentMethod === "sabpaisa" ? "default" : "outline"}
+                      onClick={() => setPaymentMethod("sabpaisa")}
+                      className="w-full"
+                    >
+                      SabPaisa
+                    </Button>
+                    <Button
+                      variant={paymentMethod === "paytm" ? "default" : "outline"}
+                      onClick={() => setPaymentMethod("paytm")}
+                      className="w-full"
+                    >
+                      Paytm
+                    </Button>
+                  </div>
+                </div>
+
                 <div className="bg-muted p-4 rounded-lg mb-4">
                   <h4 className="font-medium mb-2">Payment Summary</h4>
                   <div className="flex justify-between items-center">
@@ -521,12 +556,13 @@ export default function PaymentPage() {
                     !formData.firstName ||
                     !formData.lastName ||
                     !formData.email ||
-                    !formData.phone
+                    !formData.phone ||
+                    isProcessingPayment
                   }
                 >
                   {isProcessingPayment
-                    ? `Redirecting to ${paymentMethod === "paytm" ? "Paytm" : "Airpay"}...`
-                    : `Pay with ${paymentMethod === "paytm" ? "Paytm" : "Airpay"}`}
+                    ? `Redirecting to ${paymentMethod === "paytm" ? "Paytm" : "SabPaisa"}...`
+                    : `Pay with ${paymentMethod === "paytm" ? "Paytm" : "SabPaisa"}`}
                 </Button>
 
                 <p className="text-xs text-muted-foreground mt-2 text-center">

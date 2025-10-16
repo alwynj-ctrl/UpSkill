@@ -17,6 +17,10 @@ create policy "purchases_select_own"
   on public.purchases for select
   using (auth.uid() = user_id);
 
+-- Ensure idempotency: One row per (user_id, payment_id)
+create unique index if not exists purchases_user_payment_unique
+  on public.purchases(user_id, payment_id) where payment_id is not null;
+
 create policy "purchases_insert_own"
   on public.purchases for insert
   with check (auth.uid() = user_id);
