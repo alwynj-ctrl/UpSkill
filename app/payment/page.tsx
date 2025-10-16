@@ -311,6 +311,85 @@ export default function PaymentPage() {
     }
   }
 
+  const initiatePayUPayment = async () => {
+    setIsProcessingPayment(true)
+
+    try {
+      const currentAmount = useCustomAmount ? Number.parseFloat(customAmount) || selectedCourse.price : selectedCourse.price
+
+      const supabase = createClient()
+      const { data: purchaseData, error: purchaseError } = await supabase
+        .from("purchases")
+        .insert({
+          user_id: userId,
+          course_name: selectedCourse.title,
+          course_price: currentAmount,
+          payment_status: "pending",
+        })
+        .select()
+        .single()
+
+      if (purchaseError) {
+        console.error("[PayU] Error creating purchase record:", purchaseError)
+        alert("Failed to create purchase record. Please try again.")
+        setIsProcessingPayment(false)
+        return
+      }
+
+      const response = await fetch("/api/payu-payment", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          amount: currentAmount,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          phone: formData.phone,
+          productInfo: selectedCourse.title,
+          address: formData.address,
+          city: formData.city,
+          state: formData.state,
+          pincode: formData.pincode,
+          purchaseId: purchaseData.id,
+        }),
+      })
+
+      const result = await response.json()
+
+      if (!result.success) {
+        alert(result.error || "Payment initialization failed. Please try again.")
+        setIsProcessingPayment(false)
+        return
+      }
+
+      console.log("[PayU] Payment initialized successfully")
+
+      // Create and submit form to PayU
+      const payuForm = document.createElement("form")
+      payuForm.method = "POST"
+      payuForm.action = result.paymentUrl
+      payuForm.style.display = "none"
+
+      // Add all payment data as hidden fields
+      Object.entries(result.paymentData).forEach(([key, value]) => {
+        const input = document.createElement("input")
+        input.type = "hidden"
+        input.name = key
+        input.value = String(value)
+        payuForm.appendChild(input)
+      })
+
+      document.body.appendChild(payuForm)
+      payuForm.submit()
+    } catch (error) {
+      console.error("[PayU] Payment error:", error)
+      alert("Payment initialization failed. Please try again.")
+      setIsProcessingPayment(false)
+    }
+  }
+
   const handlePayment = () => {
     console.log("[v0] Processing payment...", {
       method: paymentMethod,
@@ -321,6 +400,8 @@ export default function PaymentPage() {
 
     if (paymentMethod === "paytm") {
       initiatePaytmPayment()
+    } else if (paymentMethod === "payu") {
+      initiatePayUPayment()
     } else {
       initiateSabpaisaPayment()
     }
@@ -533,13 +614,20 @@ export default function PaymentPage() {
               <div className="pt-4 border-t">
                 <div className="mb-4">
                   <Label className="text-base font-medium mb-2 block">Payment Method</Label>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-3 gap-2">
                     <Button
                       variant={paymentMethod === "sabpaisa" ? "default" : "outline"}
                       onClick={() => setPaymentMethod("sabpaisa")}
                       className="w-full"
                     >
                       SabPaisa
+                    </Button>
+                    <Button
+                      variant={paymentMethod === "payu" ? "default" : "outline"}
+                      onClick={() => setPaymentMethod("payu")}
+                      className="w-full"
+                    >
+                      PayU
                     </Button>
                     <Button
                       variant={paymentMethod === "paytm" ? "default" : "outline"}
@@ -573,8 +661,8 @@ export default function PaymentPage() {
                   }
                 >
                   {isProcessingPayment
-                    ? `Redirecting to ${paymentMethod === "paytm" ? "Paytm" : "SabPaisa"}...`
-                    : `Pay with ${paymentMethod === "paytm" ? "Paytm" : "SabPaisa"}`}
+                    ? `Redirecting to ${paymentMethod === "paytm" ? "Paytm" : paymentMethod === "payu" ? "PayU" : "SabPaisa"}...`
+                    : `Pay with ${paymentMethod === "paytm" ? "Paytm" : paymentMethod === "payu" ? "PayU" : "SabPaisa"}`}
                 </Button>
 
                 <p className="text-xs text-muted-foreground mt-2 text-center">
