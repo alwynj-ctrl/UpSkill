@@ -101,7 +101,7 @@ export default function PaymentPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isCheckingAuth, setIsCheckingAuth] = useState(true)
   const [userId, setUserId] = useState(null)
-  const [paymentMethod, setPaymentMethod] = useState("sabpaisa")
+  const [paymentMethod, setPaymentMethod] = useState("payu")
   const [isProcessingPayment, setIsProcessingPayment] = useState(false)
   const [formData, setFormData] = useState({
     firstName: "",
@@ -616,6 +616,7 @@ export default function PaymentPage() {
                   <Label className="text-base font-medium mb-2 block">Payment Method</Label>
                   <div className="grid grid-cols-3 gap-2">
                     <Button
+                      disabled
                       variant={paymentMethod === "sabpaisa" ? "default" : "outline"}
                       onClick={() => setPaymentMethod("sabpaisa")}
                       className="w-full"
@@ -630,6 +631,7 @@ export default function PaymentPage() {
                       PayU
                     </Button>
                     <Button
+                      disabled
                       variant={paymentMethod === "paytm" ? "default" : "outline"}
                       onClick={() => setPaymentMethod("paytm")}
                       className="w-full"
