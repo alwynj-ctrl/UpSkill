@@ -2,9 +2,9 @@ export const SABPAISA_CONFIG = {
   CLIENT_CODE: 'KART95',
   USERNAME: 'banking@upskillworkforce.co',
   PASSWORD: 'KART95_SP21020',
-  // SDK expects base64-encoded AES key/iv (128/256-bit)
-  AUTH_KEY: 'aDVHaUZHOWY2YVZWdUhjSw==',
-  AUTH_IV: 'ZDhTakgwTmxLNlRWbUh6dw==',
+  // Production uses 128-bit keys (16 chars) - use them directly without base64
+  AUTH_KEY: 'h5GiFG9f6aVVuHcK',
+  AUTH_IV: 'd8SjH0NlK6TVmHzw',
   INIT_URL: 'https://securepay.sabpaisa.in/SabPaisa/sabPaisaInit?v=1',
   RETURN_URL: 'https://www.upskillworkforce.co/payment/success',
   FAILURE_URL: 'https://www.upskillworkforce.co/payment/failure',
