@@ -2,7 +2,23 @@ import { type NextRequest, NextResponse } from "next/server"
 import { PaytmChecksum } from "@/lib/paytm-checksum"
 import { createClient } from "@/lib/supabase/server"
 
+// Handle GET requests (Paytm might use GET for some callbacks)
+export async function GET(request: NextRequest) {
+  console.log("[Paytm] ===== GET CALLBACK RECEIVED =====")
+  console.log("[Paytm] URL:", request.url)
+  console.log("[Paytm] Search params:", Object.fromEntries(request.nextUrl.searchParams))
+  
+  const failureUrl = new URL("/payment/failure", request.url)
+  failureUrl.searchParams.set("error", "GET request not supported")
+  failureUrl.searchParams.set("details", "Paytm should POST to this endpoint")
+  return NextResponse.redirect(failureUrl)
+}
+
 export async function POST(request: NextRequest) {
+  console.log("[Paytm] ===== CALLBACK RECEIVED =====")
+  console.log("[Paytm] Request method:", request.method)
+  console.log("[Paytm] Request URL:", request.url)
+  
   try {
     const formData = await request.formData()
     const params: Record<string, string> = {}
@@ -11,11 +27,10 @@ export async function POST(request: NextRequest) {
       params[key] = value.toString()
     })
 
-    const merchantKey = process.env.PAYTM_MERCHANT_KEY
+    console.log("[Paytm] Received callback params:", JSON.stringify(params, null, 2))
 
-    if (!merchantKey) {
-      return NextResponse.redirect(new URL("/payment/failure?error=Configuration error", request.url))
-    }
+    // Hardcoded Paytm Production Merchant Key
+    const merchantKey = "ycqMGlcTkfycGMps"
 
     const receivedChecksum = params.CHECKSUMHASH
     delete params.CHECKSUMHASH
@@ -23,8 +38,10 @@ export async function POST(request: NextRequest) {
     const isValidChecksum = await PaytmChecksum.verifySignature(params, merchantKey, receivedChecksum)
 
     if (!isValidChecksum) {
-      console.error("[v0] Invalid Paytm checksum")
-      return NextResponse.redirect(new URL("/payment/failure?error=Invalid checksum", request.url))
+      console.error("[Paytm] Invalid checksum")
+      const redirectUrl = new URL("/payment/failure", request.url)
+      redirectUrl.searchParams.set("error", "Invalid checksum")
+      return NextResponse.redirect(redirectUrl)
     }
 
     // Check payment status
@@ -33,11 +50,11 @@ export async function POST(request: NextRequest) {
     const txnId = params.TXNID
     const amount = params.TXNAMOUNT
 
-    console.log("[v0] Paytm payment status:", status, "Order ID:", orderId)
+    console.log("[Paytm] Payment status:", status, "Order ID:", orderId)
 
     if (status === "TXN_SUCCESS") {
       // Update purchase record in database
-      const supabase = createClient()
+      const supabase = await createClient()
 
       // Extract purchase ID from order ID
       const purchaseId = orderId.split("_")[2]
@@ -52,19 +69,28 @@ export async function POST(request: NextRequest) {
         .eq("id", purchaseId)
 
       if (error) {
-        console.error("[v0] Database update error:", error)
+        console.error("[Paytm] Database update error:", error)
       }
 
-      return NextResponse.redirect(
-        new URL(`/payment/success?orderId=${orderId}&txnId=${txnId}&amount=${amount}`, request.url),
-      )
+      const successUrl = new URL("/payment/success", request.url)
+      successUrl.searchParams.set("orderId", orderId)
+      successUrl.searchParams.set("txnId", txnId || "")
+      successUrl.searchParams.set("amount", amount)
+      return NextResponse.redirect(successUrl)
     } else {
-      return NextResponse.redirect(
-        new URL(`/payment/failure?orderId=${orderId}&reason=${params.RESPMSG || "Payment failed"}`, request.url),
-      )
+      const failureUrl = new URL("/payment/failure", request.url)
+      failureUrl.searchParams.set("orderId", orderId || "N/A")
+      failureUrl.searchParams.set("reason", params.RESPMSG || "Payment failed")
+      return NextResponse.redirect(failureUrl)
     }
   } catch (error) {
-    console.error("[v0] Paytm response error:", error)
-    return NextResponse.redirect(new URL("/payment/failure?error=Processing error", request.url))
+    console.error("[Paytm] ===== CRITICAL ERROR =====")
+    console.error("[Paytm] Error details:", error)
+    console.error("[Paytm] Error stack:", error instanceof Error ? error.stack : "No stack")
+    
+    const failureUrl = new URL("/payment/failure", request.url)
+    failureUrl.searchParams.set("error", "Processing error")
+    failureUrl.searchParams.set("details", error instanceof Error ? error.message : "Unknown error")
+    return NextResponse.redirect(failureUrl)
   }
 }

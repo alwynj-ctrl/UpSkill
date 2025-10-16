@@ -286,23 +286,24 @@ export default function PaymentPage() {
         return
       }
 
-      console.log("[v0] Initiating Paytm payment with checksum")
+      console.log("[Paytm] Transaction initiated, txnToken:", result.txnToken)
 
-      const form = document.createElement("form")
-      form.method = "POST"
-      form.action = result.actionUrl
-      form.style.display = "none"
+      // Redirect to Paytm payment page
+      const paytmBaseUrl = result.isProduction ? "https://securegw.paytm.in" : "https://securestage.paytm.in"
+      const paytmForm = document.createElement("form")
+      paytmForm.method = "POST"
+      paytmForm.action = `${paytmBaseUrl}/theia/api/v1/showPaymentPage?mid=${result.mid}&orderId=${result.orderId}`
+      paytmForm.style.display = "none"
 
-      Object.entries(result.paymentData).forEach(([key, value]) => {
-        const input = document.createElement("input")
-        input.type = "hidden"
-        input.name = key
-        input.value = value.toString()
-        form.appendChild(input)
-      })
+      // Add txnToken as hidden field
+      const tokenInput = document.createElement("input")
+      tokenInput.type = "hidden"
+      tokenInput.name = "txnToken"
+      tokenInput.value = result.txnToken
+      paytmForm.appendChild(tokenInput)
 
-      document.body.appendChild(form)
-      form.submit()
+      document.body.appendChild(paytmForm)
+      paytmForm.submit()
     } catch (error) {
       console.error("[v0] Paytm payment error:", error)
       alert("Payment initialization failed. Please try again.")
