@@ -182,6 +182,15 @@ export default function PaymentPage() {
       const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost'
       const useAuth = isLocalhost ? SABPAISA_STAGING : SABPAISA_CONFIG
 
+      // Generate transaction date in required format
+      const now = new Date()
+      const transDate = now.getFullYear() + '-' + 
+        String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+        String(now.getDate()).padStart(2, '0') + ' ' +
+        String(now.getHours()).padStart(2, '0') + ':' +
+        String(now.getMinutes()).padStart(2, '0') + ':' +
+        String(now.getSeconds()).padStart(2, '0')
+
       const formState: Record<string, any> = {
         clientCode: useAuth.CLIENT_CODE,
         transUserName: useAuth.USERNAME,
@@ -193,9 +202,11 @@ export default function PaymentPage() {
         payerMobile: formData.phone,
         amount: currentAmount,
         amountType: "INR",
-        // Use a hyphen-only clientTxnId like the vendor sample
-        clientTxnId: `${SABPAISA_CONFIG.CLIENT_CODE}-${Date.now()}`,
+        clientTxnId: `${useAuth.CLIENT_CODE}-${Date.now()}`,
         channelId: "npm",
+        // MANDATORY fields from docs
+        mcc: "6012", // Education/schools MCC code
+        transDate: transDate,
         // carry course/user context back in response for saving purchase
         udf1: selectedCourse.id,
         udf2: selectedCourse.title,
