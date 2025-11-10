@@ -101,7 +101,7 @@ export default function PaymentPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isCheckingAuth, setIsCheckingAuth] = useState(true)
   const [userId, setUserId] = useState(null)
-  const [paymentMethod, setPaymentMethod] = useState("payu")
+  const [paymentMethod, setPaymentMethod] = useState("airpay")
   const [isProcessingPayment, setIsProcessingPayment] = useState(false)
   const [formData, setFormData] = useState({
     firstName: "",
@@ -390,6 +390,123 @@ export default function PaymentPage() {
     }
   }
 
+  const initiateAirpayPayment = async () => {
+    setIsProcessingPayment(true)
+
+    if (!selectedCourse || !userId) {
+      alert("Missing required information")
+      setIsProcessingPayment(false)
+      return
+    }
+
+    try {
+      const currentAmount = useCustomAmount ? Number.parseFloat(customAmount) || selectedCourse.price : selectedCourse.price
+
+      const supabase = createClient()
+      const { data: purchaseData, error: purchaseError } = await supabase
+        .from("purchases")
+        .insert({
+          user_id: userId,
+          course_name: selectedCourse.title,
+          course_price: currentAmount,
+          payment_status: "pending",
+        })
+        .select()
+        .single()
+
+      if (purchaseError) {
+        console.error("[Airpay] Error creating purchase record:", purchaseError)
+        alert("Failed to create purchase record. Please try again.")
+        setIsProcessingPayment(false)
+        return
+      }
+
+      const response = await fetch("/api/airpay-payment", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          amount: currentAmount,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          phone: formData.phone,
+          address: formData.address,
+          city: formData.city,
+          state: formData.state,
+          pincode: formData.pincode,
+          country: "India",
+          purchaseId: purchaseData.id,
+          customField: selectedCourse.id,
+          uid: userId,
+        }),
+      })
+
+      const result = await response.json()
+
+      if (!result.success) {
+        alert(result.error || "Payment initialization failed. Please try again.")
+        setIsProcessingPayment(false)
+        return
+      }
+
+      try {
+        await supabase
+          .from("purchases")
+          .update({ payment_id: result.orderId })
+          .eq("id", purchaseData.id)
+      } catch (updateError) {
+        console.warn("[Airpay] Failed to update purchase with order id:", updateError)
+      }
+
+      // Log form data being submitted to Airpay
+      console.log("[Airpay Frontend] Form data being submitted to Airpay:")
+      console.log("  Payment URL:", result.paymentUrl)
+      console.log("  Order ID:", result.orderId)
+      console.log("  Total fields:", Object.keys(result.paymentData).length)
+      console.log("  Payment Data Fields:", Object.keys(result.paymentData).join(", "))
+      console.log("  orderid:", result.paymentData.orderid)
+      console.log("  amount:", result.paymentData.amount)
+      console.log("  buyerEmail:", result.paymentData.buyerEmail)
+      console.log("  buyerFirstName:", result.paymentData.buyerFirstName)
+      console.log("  buyerLastName:", result.paymentData.buyerLastName)
+      console.log("  UID:", result.paymentData.UID)
+      console.log("  mercid:", result.paymentData.mercid)
+      console.log("  privatekey:", "privatekey" in result.paymentData ? (result.paymentData.privatekey?.substring(0, 20) + "...") : "NOT PRESENT")
+      console.log("  checksum:", result.paymentData.checksum)
+      console.log("  checksumLength:", result.paymentData.checksum?.length)
+      console.log("[Airpay Frontend] ✓ privatekey included (required by original kit):", "privatekey" in result.paymentData)
+      console.log("[Airpay Frontend] ✓ Empty optional fields filtered out")
+      console.log("[Airpay Frontend] Full paymentData object (cleaned):", JSON.stringify(result.paymentData, null, 2))
+
+      const airpayForm = document.createElement("form")
+      airpayForm.method = "POST"
+      airpayForm.action = result.paymentUrl
+      airpayForm.style.display = "none"
+
+      // Log each form field being added
+      const formFields: Record<string, string> = {}
+      Object.entries(result.paymentData).forEach(([key, value]) => {
+        const input = document.createElement("input")
+        input.type = "hidden"
+        input.name = key
+        input.value = String(value)
+        formFields[key] = String(value)
+        airpayForm.appendChild(input)
+      })
+
+      console.log("[Airpay Frontend] Form fields being submitted:", formFields)
+
+      document.body.appendChild(airpayForm)
+      airpayForm.submit()
+    } catch (error) {
+      console.error("[Airpay] Payment error:", error)
+      alert("Payment initialization failed. Please try again.")
+      setIsProcessingPayment(false)
+    }
+  }
+
   const handlePayment = () => {
     console.log("[v0] Processing payment...", {
       method: paymentMethod,
@@ -402,6 +519,8 @@ export default function PaymentPage() {
       initiatePaytmPayment()
     } else if (paymentMethod === "payu") {
       initiatePayUPayment()
+    } else if (paymentMethod === "airpay") {
+      initiateAirpayPayment()
     } else {
       initiateSabpaisaPayment()
     }
@@ -614,7 +733,7 @@ export default function PaymentPage() {
               <div className="pt-4 border-t">
                 <div className="mb-4">
                   <Label className="text-base font-medium mb-2 block">Payment Method</Label>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-4 gap-2">
                     <Button
                       disabled
                       variant={paymentMethod === "sabpaisa" ? "default" : "outline"}
@@ -622,6 +741,13 @@ export default function PaymentPage() {
                       className="w-full"
                     >
                       SabPaisa
+                    </Button>
+                    <Button
+                      variant={paymentMethod === "airpay" ? "default" : "outline"}
+                      onClick={() => setPaymentMethod("airpay")}
+                      className="w-full"
+                    >
+                      Airpay
                     </Button>
                     <Button
                       variant={paymentMethod === "payu" ? "default" : "outline"}
@@ -663,8 +789,24 @@ export default function PaymentPage() {
                   }
                 >
                   {isProcessingPayment
-                    ? `Redirecting to ${paymentMethod === "paytm" ? "Paytm" : paymentMethod === "payu" ? "PayU" : "SabPaisa"}...`
-                    : `Pay with ${paymentMethod === "paytm" ? "Paytm" : paymentMethod === "payu" ? "PayU" : "SabPaisa"}`}
+                    ? `Redirecting to ${
+                        paymentMethod === "paytm"
+                          ? "Paytm"
+                          : paymentMethod === "payu"
+                            ? "PayU"
+                            : paymentMethod === "airpay"
+                              ? "Airpay"
+                              : "SabPaisa"
+                      }...`
+                    : `Pay with ${
+                        paymentMethod === "paytm"
+                          ? "Paytm"
+                          : paymentMethod === "payu"
+                            ? "PayU"
+                            : paymentMethod === "airpay"
+                              ? "Airpay"
+                              : "SabPaisa"
+                      }`}
                 </Button>
 
                 <p className="text-xs text-muted-foreground mt-2 text-center">
