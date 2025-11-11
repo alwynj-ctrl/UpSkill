@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { prepareAirpaySeamlessPayload } from "@/lib/airpay"
+import { prepareAirpayPayment } from "@/lib/airpay"
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,20 +17,10 @@ export async function POST(request: NextRequest) {
       pincode,
       country,
       purchaseId,
+      customField,
       uid,
-      channel,
-      mode,
-      chmod,
-      cashPincode,
-      txnSubtype,
       vpa,
-      apiName,
-      currency,
-      isoCurrency,
-      domainUrl,
-      merchantDomain,
-      upiTpvAccount,
-      upiTpvIfsc,
+      kitType,
     } = body
 
     if (!purchaseId) {
@@ -43,7 +33,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Invalid amount" }, { status: 400 })
     }
 
-    const preparation = prepareAirpaySeamlessPayload({
+    const initResult = prepareAirpayPayment({
       buyerEmail: email,
       buyerFirstName: firstName,
       buyerLastName: lastName,
@@ -55,74 +45,45 @@ export async function POST(request: NextRequest) {
       buyerPinCode: pincode,
       amount: amountNumber,
       purchaseId,
+      customField,
       uid,
-      channel,
-      mode,
-      chmod,
-      cashPincode,
-      txnSubtype,
       vpa,
-      apiName,
-      currency,
-      isoCurrency,
-      domainUrl,
-      merchantDomain,
-      upiTpvAccount,
-      upiTpvIfsc,
+      kitType,
     })
 
-    console.log("[Airpay API] Seamless request payload:", JSON.stringify(preparation.payload, null, 2))
-
-    const searchParams = new URLSearchParams()
-    Object.entries(preparation.payload).forEach(([key, value]) => {
-      searchParams.append(key, value)
-    })
-
-    const airpayResponse = await fetch(preparation.endpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: searchParams,
-    })
-
-    const rawResponse = await airpayResponse.text()
-    let parsedResponse: unknown = rawResponse
-    try {
-      parsedResponse = JSON.parse(rawResponse)
-    } catch {
-      // keep raw text (Airpay may respond with XML or plain text)
-    }
-
-    console.log("[Airpay API] Seamless response status:", airpayResponse.status)
-    console.log("[Airpay API] Seamless raw response:", rawResponse)
-
-    if (!airpayResponse.ok) {
-      return NextResponse.json(
-        {
-          success: false,
-          orderId: preparation.orderId,
-          payload: preparation.payload,
-          response: parsedResponse,
-        },
-        { status: airpayResponse.status }
-      )
-    }
+    // Log payment data and checksum for comparison
+    console.log("[Airpay API] Payment Data being sent to Airpay:")
+    console.log("  orderid:", initResult.paymentData.orderid)
+    console.log("  amount:", initResult.paymentData.amount)
+    console.log("  buyerEmail:", initResult.paymentData.buyerEmail)
+    console.log("  buyerFirstName:", initResult.paymentData.buyerFirstName)
+    console.log("  buyerLastName:", initResult.paymentData.buyerLastName)
+    console.log("  UID:", initResult.paymentData.UID)
+    console.log("  mercid:", initResult.paymentData.mercid)
+    console.log("  privatekey:", initResult.paymentData.privatekey ? initResult.paymentData.privatekey.substring(0, 20) + "..." : "NOT PRESENT")
+    console.log("  checksum:", initResult.paymentData.checksum)
+    console.log("  checksumLength:", initResult.paymentData.checksum?.length)
+    console.log("  Total fields:", Object.keys(initResult.paymentData).length)
+    console.log("  Fields:", Object.keys(initResult.paymentData).join(", "))
+    console.log("[Airpay API] Full paymentData (cleaned):", JSON.stringify(initResult.paymentData, null, 2))
+    console.log("[Airpay API] ✓ privatekey included (required by Airpay):", "privatekey" in initResult.paymentData)
+    console.log("[Airpay API] ✓ Empty optional fields filtered out")
 
     return NextResponse.json({
       success: true,
-      orderId: preparation.orderId,
-      payload: preparation.payload,
-      response: parsedResponse,
+      orderId: initResult.orderId,
+      paymentUrl: initResult.paymentUrl,
+      paymentData: initResult.paymentData,
     })
   } catch (error) {
-    console.error("[Airpay] Seamless payment error:", error)
+    console.error("[Airpay] Payment initialization error:", error)
     return NextResponse.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : "Failed to process Airpay seamless payment",
+        error: error instanceof Error ? error.message : "Failed to initialize Airpay payment",
       },
       { status: 500 }
     )
   }
 }
+

@@ -112,7 +112,6 @@ export default function PaymentPage() {
     city: "",
     state: "",
     pincode: "",
-    vpa: "",
     specialRequirements: "",
   })
 
@@ -439,17 +438,15 @@ export default function PaymentPage() {
           pincode: formData.pincode,
           country: "India",
           purchaseId: purchaseData.id,
+          customField: selectedCourse.id,
           uid: userId,
-          vpa: formData.vpa,
-          domainUrl: typeof window !== "undefined" ? window.location.origin : undefined,
         }),
       })
 
       const result = await response.json()
 
       if (!result.success) {
-        console.error("[Airpay] Seamless payment failed:", result)
-        alert(result.error || "Airpay payment failed. Please try again.")
+        alert(result.error || "Payment initialization failed. Please try again.")
         setIsProcessingPayment(false)
         return
       }
@@ -457,37 +454,52 @@ export default function PaymentPage() {
       try {
         await supabase
           .from("purchases")
-          .update({
-            payment_id: result.orderId,
-            payment_status:
-              result.response?.TRANSACTIONSTATUS === "200" ||
-              result.response?.TRANSACTIONPAYMENTSTATUS === "SUCCESS"
-                ? "completed"
-                : "pending",
-            gateway_response: result.response,
-          })
+          .update({ payment_id: result.orderId })
           .eq("id", purchaseData.id)
       } catch (updateError) {
         console.warn("[Airpay] Failed to update purchase with order id:", updateError)
       }
 
-      console.log("[Airpay Frontend] Seamless payload submitted:", result.payload)
-      console.log("[Airpay Frontend] Seamless response:", result.response)
+      // Log form data being submitted to Airpay
+      console.log("[Airpay Frontend] Form data being submitted to Airpay:")
+      console.log("  Payment URL:", result.paymentUrl)
+      console.log("  Order ID:", result.orderId)
+      console.log("  Total fields:", Object.keys(result.paymentData).length)
+      console.log("  Payment Data Fields:", Object.keys(result.paymentData).join(", "))
+      console.log("  orderid:", result.paymentData.orderid)
+      console.log("  amount:", result.paymentData.amount)
+      console.log("  buyerEmail:", result.paymentData.buyerEmail)
+      console.log("  buyerFirstName:", result.paymentData.buyerFirstName)
+      console.log("  buyerLastName:", result.paymentData.buyerLastName)
+      console.log("  UID:", result.paymentData.UID)
+      console.log("  mercid:", result.paymentData.mercid)
+      console.log("  privatekey:", "privatekey" in result.paymentData ? (result.paymentData.privatekey?.substring(0, 20) + "...") : "NOT PRESENT")
+      console.log("  checksum:", result.paymentData.checksum)
+      console.log("  checksumLength:", result.paymentData.checksum?.length)
+      console.log("[Airpay Frontend] ✓ privatekey included (required by Airpay):", "privatekey" in result.paymentData)
+      console.log("[Airpay Frontend] ✓ Empty optional fields filtered out")
+      console.log("[Airpay Frontend] Full paymentData object (cleaned):", JSON.stringify(result.paymentData, null, 2))
 
-      if (
-        result.response?.TRANSACTIONSTATUS === "200" ||
-        result.response?.TRANSACTIONPAYMENTSTATUS === "SUCCESS"
-      ) {
-        alert("Airpay payment completed successfully.")
-      } else {
-        alert(
-          `Payment initiated. Current status: ${
-            result.response?.TRANSACTIONPAYMENTSTATUS || result.response?.MESSAGE || "UNKNOWN"
-          }`
-        )
-      }
+      const airpayForm = document.createElement("form")
+      airpayForm.method = "POST"
+      airpayForm.action = result.paymentUrl
+      airpayForm.style.display = "none"
 
-      setIsProcessingPayment(false)
+      // Log each form field being added
+      const formFields: Record<string, string> = {}
+      Object.entries(result.paymentData).forEach(([key, value]) => {
+        const input = document.createElement("input")
+        input.type = "hidden"
+        input.name = key
+        input.value = String(value)
+        formFields[key] = String(value)
+        airpayForm.appendChild(input)
+      })
+
+      console.log("[Airpay Frontend] Form fields being submitted:", formFields)
+
+      document.body.appendChild(airpayForm)
+      airpayForm.submit()
     } catch (error) {
       console.error("[Airpay] Payment error:", error)
       alert("Payment initialization failed. Please try again.")
@@ -670,16 +682,6 @@ export default function PaymentPage() {
                   value={formData.phone}
                   onChange={(e) => handleInputChange("phone", e.target.value)}
                   required
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="vpa">UPI VPA (optional)</Label>
-                <Input
-                  id="vpa"
-                  placeholder="username@bank"
-                  value={formData.vpa}
-                  onChange={(e) => handleInputChange("vpa", e.target.value)}
                 />
               </div>
 

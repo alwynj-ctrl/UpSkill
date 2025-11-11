@@ -1,87 +1,69 @@
 import { generateAirpayChecksum } from "./airpay-checksum"
 
-const AIRPAY_SEAMLESS_URL =
-  process.env.AIRPAY_SEAMLESS_URL || "https://kraken.airpay.co.in/airpay/pay/payindexapi.php"
+const AIRPAY_PAYMENT_URL = process.env.AIRPAY_PAYMENT_URL || "https://payments.airpay.co.in/pay/index.php"
 const AIRPAY_MERCHANT_ID = process.env.AIRPAY_MERCHANT_ID
 const AIRPAY_USERNAME = process.env.AIRPAY_USERNAME
 const AIRPAY_PASSWORD = process.env.AIRPAY_PASSWORD
 const AIRPAY_SECRET_KEY = process.env.AIRPAY_SECRET_KEY
-const AIRPAY_CHANNEL = process.env.AIRPAY_CHANNEL || "upi"
-const AIRPAY_MODE = process.env.AIRPAY_MODE || "vpa"
-const AIRPAY_CHMOD = process.env.AIRPAY_CHMOD || "upi"
-const AIRPAY_CASH_PINCODE = process.env.AIRPAY_CASH_PINCODE || ""
-const AIRPAY_DOMAIN_URL = process.env.AIRPAY_DOMAIN_URL || "https://www.upskillworkforce.co"
-const AIRPAY_MER_DOM = process.env.AIRPAY_MER_DOM || ""
-const AIRPAY_CURRENCY = process.env.AIRPAY_CURRENCY || "356"
-const AIRPAY_ISO_CURRENCY = process.env.AIRPAY_ISO_CURRENCY || "INR"
+const AIRPAY_CHMOD = process.env.AIRPAY_CHMOD || ""
+const AIRPAY_KITTYPE = process.env.AIRPAY_KITTYPE || "server_side_sdk"
 
-export type AirpaySeamlessParams = {
+export type AirpayInitParams = {
   buyerEmail: string
   buyerPhone: string
   buyerFirstName: string
   buyerLastName: string
-  buyerAddress: string
-  buyerCity: string
-  buyerState: string
-  buyerCountry: string
-  buyerPinCode: string
   amount: number
   purchaseId: string
   uid?: string
-  channel?: string
-  mode?: string
-  chmod?: string
-  cashPincode?: string
+  customField?: string
+  buyerAddress?: string
+  buyerCity?: string
+  buyerState?: string
+  buyerCountry?: string
+  buyerPinCode?: string
   txnSubtype?: string
-  vpa?: string
-  apiName?: string
+  token?: string
+  wallet?: string
   currency?: string
   isoCurrency?: string
-  domainUrl?: string
-  merchantDomain?: string // will be base64 encoded if raw domain provided
-  upiTpvAccount?: string
-  upiTpvIfsc?: string
+  vpa?: string
+  kitType?: string
+  subscription?: {
+    nextRunDate: string // Format: mm/dd/yyyy (e.g., "03/08/2022") - must be current date + 1 (t+1)
+    frequency: string // Numeric (1-999)
+    period: string // D|W|M|Y|A (Day/Week/Month/Year/Adhoc)
+    amount: number // Subscription amount
+    isRecurring: string | number // 1 for recurring, 0 for non-recurring
+    recurringCount: string | number // 1-999 (999 = never ending)
+    retryAttempts: string | number // 1-999
+    maxAmount?: number // Maximum amount that can be charged (>= amount)
+  }
 }
 
-export type AirpaySeamlessResult = {
+export type AirpayInitResult = {
   orderId: string
-  endpoint: string
-  payload: Record<string, string>
-  debug: {
-    checksum: string
-    alldata: string
-    checksumInput: string
-    privateKey: string
-    key: string
-    date: string
-  }
+  paymentUrl: string
+  paymentData: Record<string, string>
 }
 
 function assertConfig() {
   if (!AIRPAY_MERCHANT_ID || !AIRPAY_USERNAME || !AIRPAY_PASSWORD || !AIRPAY_SECRET_KEY) {
-    throw new Error(
-      "Missing Airpay configuration. Please set AIRPAY_MERCHANT_ID, AIRPAY_USERNAME, AIRPAY_PASSWORD and AIRPAY_SECRET_KEY environment variables."
-    )
+    throw new Error("Missing Airpay configuration. Please set AIRPAY_MERCHANT_ID, AIRPAY_USERNAME, AIRPAY_PASSWORD and AIRPAY_SECRET_KEY environment variables.")
   }
 }
 
 function sanitiseOrderId(source: string) {
-  const cleaned = source.replace(/[^A-Za-z0-9]/g, "")
+  const cleaned = source.replace(/[^A-Za-z0-9]/g, "").toUpperCase()
   const suffix = cleaned || `AIRPAY${Date.now()}`
-  return suffix.length > 25 ? suffix.substring(0, 25) : suffix
+  return suffix.length > 24 ? suffix.substring(0, 24) : suffix
 }
 
 function normaliseAmount(amount: number) {
   return amount.toFixed(2)
 }
 
-function encodeDomain(domain?: string) {
-  const trimmed = (domain || "").trim()
-  if (!trimmed) return ""
-  return Buffer.from(trimmed, "utf8").toString("base64")
-}
-
-export function prepareAirpaySeamlessPayload(params: AirpaySeamlessParams): AirpaySeamlessResult {
+export function prepareAirpayPayment(params: AirpayInitParams): AirpayInitResult {
   assertConfig()
 
   const {
@@ -89,75 +71,97 @@ export function prepareAirpaySeamlessPayload(params: AirpaySeamlessParams): Airp
     buyerPhone,
     buyerFirstName,
     buyerLastName,
-    buyerAddress,
-    buyerCity,
-    buyerState,
-    buyerCountry,
-    buyerPinCode,
     amount,
     purchaseId,
     uid,
-    channel,
-    mode,
-    chmod,
-    cashPincode,
-    txnSubtype,
-    vpa,
-    apiName,
-    currency,
-    isoCurrency,
-    domainUrl,
-    merchantDomain,
-    upiTpvAccount,
-    upiTpvIfsc,
+    customField = "",
+    buyerAddress = "",
+    buyerCity = "",
+    buyerState = "",
+    buyerCountry = "India",
+    buyerPinCode = "",
+    txnSubtype = "",
+    token = "",
+    wallet = "0",
+    currency = "356",
+    isoCurrency = "INR",
+    vpa = "",
+    kitType,
+    subscription,
   } = params
 
-  const requiredFields = [
-    buyerEmail,
-    buyerPhone,
-    buyerFirstName,
-    buyerLastName,
-    buyerAddress,
-    buyerCity,
-    buyerState,
-    buyerCountry,
-    buyerPinCode,
-  ]
-  if (requiredFields.some((value) => !value || `${value}`.trim().length === 0)) {
-    throw new Error("Missing required buyer fields for Airpay seamless payment.")
+  if (!buyerEmail || !buyerFirstName || !buyerLastName || !buyerPhone) {
+    throw new Error("Missing required buyer fields for Airpay payment.")
   }
 
-  const email = buyerEmail.replace(/[\r\n]/g, "").trim()
-  const phone = buyerPhone.replace(/[\r\n]/g, "").trim()
-  const fname = buyerFirstName.replace(/[\r\n]/g, "").trim()
-  const lname = buyerLastName.replace(/[\r\n]/g, "").trim()
-  const addr = buyerAddress.replace(/[\r\n]/g, "").trim()
-  const city = buyerCity.replace(/[\r\n]/g, "").trim()
-  const state = buyerState.replace(/[\r\n]/g, "").trim()
-  const country = buyerCountry.replace(/[\r\n]/g, "").trim()
-  const pin = buyerPinCode.replace(/[\r\n]/g, "").trim()
-
-  let orderId = sanitiseOrderId(purchaseId)
-  if (!orderId) {
-    orderId = sanitiseOrderId(`ORDER${Date.now()}`)
+  // Use raw values (with whitespace/newline stripping) exactly as required for checksum concatenation
+  
+  // Use raw values exactly as they come (empty string if undefined/null)
+  // CRITICAL: Remove any newlines, carriage returns, or extra whitespace that could break checksum
+  const email = String(buyerEmail || "").replace(/[\r\n]/g, "").trim()
+  const fname = String(buyerFirstName || "").replace(/[\r\n]/g, "").trim()
+  const lname = String(buyerLastName || "").replace(/[\r\n]/g, "").trim()
+  const addr = String(buyerAddress || "").replace(/[\r\n]/g, "").trim()
+  const cityVal = String(buyerCity || "").replace(/[\r\n]/g, "").trim()
+  const stateVal = String(buyerState || "").replace(/[\r\n]/g, "").trim()
+  const countryVal = String(buyerCountry || "").replace(/[\r\n]/g, "").trim()
+  
+  // Sanitize orderId to alphanumeric only (required by Airpay validation: /^[A-Za-z\d]+$/)
+  // Remove all non-alphanumeric characters (hyphens, spaces, etc.)
+  // Length must be 1-25 characters (per documentation)
+  // This is critical - use the SAME sanitized value in both checksum and form data
+  // NOTE: Keep original casing - checksum is case sensitive
+  const rawOrderId = String(purchaseId || "")
+  let orderId = rawOrderId.replace(/[^A-Za-z0-9]/g, "")
+  
+  // If sanitization removed everything or no purchaseId provided, generate a new one
+  // Format: ORDER + timestamp (last 20 chars to stay within 25 char limit)
+  if (!orderId || orderId.length === 0) {
+    const timestamp = Date.now().toString()
+    orderId = `ORDER${timestamp}`.substring(0, 25)
   }
-
-  const amountStr = normaliseAmount(amount)
-  const uidValue = (uid || purchaseId || "").replace(/[\r\n]/g, "").trim()
-  const merchId = String(AIRPAY_MERCHANT_ID)
-  const channelValue = (channel || AIRPAY_CHANNEL).trim()
-  const modeValue = (mode || AIRPAY_MODE).trim()
-  const chmodValue = (chmod || AIRPAY_CHMOD).trim()
-  const cashPinValue = (cashPincode || AIRPAY_CASH_PINCODE || pin).trim()
-  const currencyCode = String(currency || AIRPAY_CURRENCY).trim()
-  const isoCurrencyCode = String(isoCurrency || AIRPAY_ISO_CURRENCY).trim().toUpperCase()
-  const domainUrlValue = (domainUrl || AIRPAY_DOMAIN_URL).trim()
-  const merDomValue =
-    merchantDomain?.trim() ||
-    (AIRPAY_MER_DOM ? AIRPAY_MER_DOM.trim() : encodeDomain(domainUrlValue || "http://localhost"))
-
+  
+  // Ensure length is between 1-25 characters (per documentation)
+  if (orderId.length > 25) {
+    orderId = orderId.substring(0, 25)
+  }
+  
+  // Final validation - must be at least 1 character
+  if (orderId.length === 0) {
+    orderId = "ORDER1"
+  }
+  
+  // Amount must be formatted with 2 decimals (e.g., "1.00")
+  const amountStr = amount.toFixed(2)
+  
+  // Date in YYYY-MM-DD format (per Sanctum docs: date.toISOString().split('T')[0])
   const datePortion = new Date().toISOString().split("T")[0]
+  
+  // Prepare UID and subscription index (exact order per docs)
+  const uidValue = String(uid ?? purchaseId ?? "")
+  let subscriptionIndex = ""
+  if (subscription) {
+    const {
+      nextRunDate = "",
+      frequency = "",
+      period = "",
+      amount: subscriptionAmount = 0,
+      isRecurring = "",
+      recurringCount = "",
+      retryAttempts = "",
+    } = subscription
 
+    subscriptionIndex = `${String(nextRunDate)}${String(frequency)}${String(period)}${normaliseAmount(
+      Number(subscriptionAmount || 0)
+    )}${String(isRecurring)}${String(recurringCount)}${String(retryAttempts)}`
+  }
+  
+  // Generate checksum using the official Sanctum v3 formula
+  // alldata = buyerEmail + buyerFirstName + buyerLastName + buyerAddress + buyerCity + buyerState + buyerCountry + amount + orderid + UID + siindexvar + date
+  // key = sha256(username + ":" + password)
+  // checksum = sha256(key + "@" + alldata)
+  const mercidStr = String(AIRPAY_MERCHANT_ID || "")
+  
   const checksumResult = generateAirpayChecksum({
     username: AIRPAY_USERNAME!,
     password: AIRPAY_PASSWORD!,
@@ -166,80 +170,172 @@ export function prepareAirpaySeamlessPayload(params: AirpaySeamlessParams): Airp
     buyerFirstName: fname,
     buyerLastName: lname,
     buyerAddress: addr,
-    buyerCity: city,
-    buyerState: state,
-    buyerCountry: country,
+    buyerCity: cityVal,
+    buyerState: stateVal,
+    buyerCountry: countryVal,
     amount: amountStr,
-    orderId,
+    orderId: orderId,
     uid: uidValue,
+    subscriptionIndex,
     date: datePortion,
   })
 
-  const { privateKey, key, checksum, alldata, checksumInput, date } = checksumResult
+  const { privateKey, key, checksum, alldata } = checksumResult
 
-  console.log("[Airpay] Seamless checksum debug:")
+  // Debug logging - print FULL values for verification
+  console.log("[Airpay] Debug checksum calculation (Sanctum v3):")
   console.log("  orderId:", orderId)
-  console.log("  amount:", amountStr)
-  console.log("  date:", date)
-  console.log("  alldata:", alldata)
-  console.log("  privateKey:", privateKey)
-  console.log("  key:", key)
-  console.log("  checksumInput:", checksumInput)
-  console.log("  checksum:", checksum)
+  console.log("  amountStr:", amountStr)
+  console.log("  datePortion:", datePortion)
+  console.log("  alldata (FULL):", alldata)
+  console.log("  alldataLength:", alldata.length)
+  console.log("  privateKey (FULL):", privateKey)
+  console.log("  key (FULL):", key)
+  console.log("  checksumInput:", checksumResult.checksumInput)
+  console.log("  checksum (FULL):", checksum)
+  console.log("  checksumLength:", checksum.length)
+  
+  // Log individual alldata components for verification
+  console.log("[Airpay] Alldata components breakdown (Sanctum v3 order):")
+  console.log("  email:", email, "(length:", email.length, ")")
+  console.log("  fname:", fname, "(length:", fname.length, ")")
+  console.log("  lname:", lname, "(length:", lname.length, ")")
+  console.log("  addr:", addr, "(length:", addr.length, ")")
+  console.log("  city:", cityVal, "(length:", cityVal.length, ")")
+  console.log("  state:", stateVal, "(length:", stateVal.length, ")")
+  console.log("  country:", countryVal, "(length:", countryVal.length, ")")
+  console.log("  amountStr:", amountStr, "(length:", amountStr.length, ")")
+  console.log("  orderId:", orderId, "(length:", orderId.length, ")")
+  console.log("  uidValue:", uidValue, "(length:", uidValue.length, ")")
+  console.log("  subscriptionIndex:", subscriptionIndex, "(length:", subscriptionIndex.length, ")")
+  console.log("  datePortion:", datePortion, "(length:", datePortion.length, ")")
+  console.log("  NOTE: mercid is NOT part of alldata per Sanctum docs")
 
-  const payload: Record<string, string> = {
-    buyer_email: email,
-    buyer_phone: phone,
-    buyer_first_name: fname,
-    buyer_last_name: lname,
-    buyer_address: addr,
-    buyer_city: city,
-    buyer_state: state,
-    buyer_country: country,
-    buyer_pincode: pin,
-    order_id: orderId,
-    amount: amountStr,
+  // Prepare other form fields
+  const safeCustomField = (customField || orderId).replace(/[^A-Za-z0-9\s=|]/g, "")
+  const customvar = `${safeCustomField}|${AIRPAY_USERNAME}|${AIRPAY_MERCHANT_ID}`
+  // uidValue already defined above for checksum calculation
+  const walletValue = String(wallet ?? "0")
+  const currencyCode = String(currency ?? "356")
+  const isoCurrencyCode = String(isoCurrency ?? "INR").toUpperCase()
+  const kitTypeValue = String(kitType || AIRPAY_KITTYPE)
+
+  // CRITICAL: Use the EXACT same values in paymentData as used in checksum calculation
+  // This ensures the checksum validates correctly
+  const paymentData: Record<string, string> = {
+    buyerEmail: email, // Same as in alldata
+    buyerPhone: String(buyerPhone || ""),
+    buyerFirstName: fname, // Same as in alldata
+    buyerLastName: lname, // Same as in alldata
+    buyerAddress: addr, // Same as in alldata
+    buyerCity: cityVal, // Same as in alldata
+    buyerState: stateVal, // Same as in alldata
+    buyerCountry: countryVal, // Same as in alldata
+    buyerPinCode: String(buyerPinCode || ""),
+    orderid: orderId, // EXACT same orderId as in alldata checksum calculation
+    amount: amountStr, // EXACT same amountStr as in alldata checksum calculation
     UID: uidValue,
-    channel: channelValue,
-    mode: modeValue,
-    private_key: privateKey,
-    cash_pincode: cashPinValue,
-    merchant_id: merchId,
-    chmod: chmodValue,
-    checksum,
-    mer_dom: merDomValue,
+    customvar,
+    txnsubtype: String(txnSubtype || ""),
+    token: String(token || ""),
+    wallet: walletValue,
     currency: currencyCode,
     isocurrency: isoCurrencyCode,
+    vpa: String(vpa || ""),
+    kittype: kitTypeValue,
+    privatekey: privateKey,
+    checksum,
+    mercid: String(AIRPAY_MERCHANT_ID || ""),
+    chmod: String(AIRPAY_CHMOD || ""),
   }
 
-  if (txnSubtype) payload.txnsubtype = String(txnSubtype).trim()
-  if (vpa) payload.vpa = vpa.trim()
-  if (apiName) payload.apiName = apiName.trim()
-  if (domainUrlValue) payload.domain_url = domainUrlValue
-  if (upiTpvAccount) payload.upi_tpv_account = String(upiTpvAccount).trim()
-  if (upiTpvIfsc) payload.upi_tpv_ifsc = upiTpvIfsc.trim()
+  // Add subscription fields if subscription is provided
+  if (subscription) {
+    const {
+      nextRunDate = "",
+      period = "",
+      frequency = "",
+      amount: subscriptionAmount = 0,
+      isRecurring = "",
+      recurringCount = "",
+      retryAttempts = "",
+      maxAmount,
+    } = subscription
 
-  // Remove empty optional fields
-  Object.entries(payload).forEach(([key, value]) => {
-    if (value === "" || value === undefined || value === null) {
-      delete payload[key]
+    paymentData.sb_nextrundate = String(nextRunDate)
+    paymentData.sb_period = String(period)
+    paymentData.sb_frequency = String(frequency)
+    paymentData.sb_amount = normaliseAmount(Number(subscriptionAmount || 0))
+    paymentData.sb_isrecurring = String(isRecurring)
+    paymentData.sb_recurringcount = String(recurringCount)
+    paymentData.sb_retryattempts = String(retryAttempts)
+    if (maxAmount !== undefined) {
+      paymentData.sb_maxamount = normaliseAmount(Number(maxAmount))
     }
-  })
+  }
 
-  console.log("[Airpay] Seamless payload (sanitized):", JSON.stringify(payload, null, 2))
+  // Compare checksum calculation values with payment data being sent
+  console.log("[Airpay] Comparison: Checksum inputs vs Payment Data")
+  console.log("  ✓ orderid - checksum:", orderId, "| paymentData:", paymentData.orderid, "| match:", orderId === paymentData.orderid)
+  console.log("  ✓ amount - checksum:", amountStr, "| paymentData:", paymentData.amount, "| match:", amountStr === paymentData.amount)
+  console.log("  ✓ buyerEmail - checksum:", email, "| paymentData:", paymentData.buyerEmail, "| match:", email === paymentData.buyerEmail)
+  console.log("  ✓ buyerFirstName - checksum:", fname, "| paymentData:", paymentData.buyerFirstName, "| match:", fname === paymentData.buyerFirstName)
+  console.log("  ✓ buyerLastName - checksum:", lname, "| paymentData:", paymentData.buyerLastName, "| match:", lname === paymentData.buyerLastName)
+  console.log("  ✓ buyerAddress - checksum:", addr, "| paymentData:", paymentData.buyerAddress, "| match:", addr === paymentData.buyerAddress)
+  console.log("  ✓ buyerCity - checksum:", cityVal, "| paymentData:", paymentData.buyerCity, "| match:", cityVal === paymentData.buyerCity)
+  console.log("  ✓ buyerState - checksum:", stateVal, "| paymentData:", paymentData.buyerState, "| match:", stateVal === paymentData.buyerState)
+  console.log("  ✓ buyerCountry - checksum:", countryVal, "| paymentData:", paymentData.buyerCountry, "| match:", countryVal === paymentData.buyerCountry)
+  console.log("  ✓ UID - checksum:", uidValue, "| paymentData:", paymentData.UID, "| match:", uidValue === paymentData.UID)
+  console.log("  ✓ subscriptionIndex (if any) - checksum:", subscriptionIndex, "| match:", subscription ? "included" : "not applicable")
+  console.log("  ✓ checksum - calculated:", checksum, "| paymentData:", paymentData.checksum, "| match:", checksum === paymentData.checksum)
+  console.log("  NOTE: mercid is NOT part of checksum, but is sent in paymentData")
+  console.log("[Airpay] Final paymentData object (before cleaning):", JSON.stringify(paymentData, null, 2))
+
+  // CRITICAL: Airpay expects privatekey in payload for simple transaction redirect
+  
+  // Filter out empty strings (optional fields that are empty should be omitted)
+  // Note: Original kit sends all fields including empty ones, but Airpay may expect them omitted
+  // Let's be conservative and only filter truly optional empty fields
+  const cleanPaymentData = Object.fromEntries(
+    Object.entries(paymentData).filter(([key, v]) => {
+      // Required fields: always keep even if empty (let Airpay validate)
+      const requiredFields = [
+        "buyerEmail", "buyerPhone", "buyerFirstName", "buyerLastName",
+        "orderid", "amount", "UID", "mercid", "privatekey", "checksum", "kittype"
+      ]
+      
+      if (requiredFields.includes(key)) {
+        return true // Always keep required fields
+      }
+      
+      // For optional fields, filter out empty strings
+      // Note: "0" is a valid value (e.g., wallet), so keep it
+      return v !== "" && v !== null && v !== undefined
+    })
+  ) as Record<string, string>
+
+  // Calculate which fields were removed
+  const removedFields = Object.keys(paymentData).filter(k => !(k in cleanPaymentData))
+  
+  console.log("[Airpay] Cleaned paymentData (after removing empty optional fields):")
+  console.log("  Original field count:", Object.keys(paymentData).length)
+  console.log("  Cleaned field count:", Object.keys(cleanPaymentData).length)
+  if (removedFields.length > 0) {
+    console.log("  Optional fields removed (empty):", removedFields.join(", "))
+    removedFields.forEach(field => {
+      console.log(`    - ${field}:`, paymentData[field] === "" ? "(empty string)" : paymentData[field])
+    })
+  }
+  console.log("  Fields being sent:", Object.keys(cleanPaymentData).join(", "))
+  console.log("  Cleaned payload:", JSON.stringify(cleanPaymentData, null, 2))
+  console.log("  ✓ privatekey included (required by Airpay):", "privatekey" in cleanPaymentData)
+  console.log("  ✓ checksum included:", "checksum" in cleanPaymentData, "=", cleanPaymentData.checksum)
+  console.log("  ✓ mercid included:", "mercid" in cleanPaymentData, "=", cleanPaymentData.mercid)
 
   return {
     orderId,
-    endpoint: AIRPAY_SEAMLESS_URL,
-    payload,
-    debug: {
-      checksum,
-      alldata,
-      checksumInput,
-      privateKey,
-      key,
-      date,
-    },
+    paymentUrl: AIRPAY_PAYMENT_URL,
+    paymentData: cleanPaymentData,
   }
 }
 
