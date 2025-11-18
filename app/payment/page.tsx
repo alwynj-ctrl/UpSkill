@@ -9,9 +9,17 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useState, useEffect } from "react"
 import { submitPaymentForm } from "sabpaisa-pg-dev"
-import { SABPAISA_CONFIG, SABPAISA_STAGING, generateSabPaisaOrderId } from "@/lib/sabpaisa"
+import { SABPAISA_CONFIG, SABPAISA_STAGING } from "@/lib/sabpaisa"
 import { useSearchParams, useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
+
+declare global {
+  interface Window {
+    Razorpay?: any
+  }
+}
+
+const RAZORPAY_CHECKOUT_URL = "https://checkout.razorpay.com/v1/checkout.js"
 
 const courses = [
   {
@@ -101,7 +109,7 @@ export default function PaymentPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isCheckingAuth, setIsCheckingAuth] = useState(true)
   const [userId, setUserId] = useState(null)
-  const [paymentMethod, setPaymentMethod] = useState("airpay")
+  const [paymentMethod, setPaymentMethod] = useState("razorpay")
   const [isProcessingPayment, setIsProcessingPayment] = useState(false)
   const [formData, setFormData] = useState({
     firstName: "",
@@ -114,6 +122,33 @@ export default function PaymentPage() {
     pincode: "",
     specialRequirements: "",
   })
+
+  const loadRazorpayCheckout = () =>
+    new Promise<void>((resolve, reject) => {
+      if (typeof window === "undefined") {
+        reject(new Error("Razorpay SDK can only be loaded in the browser"))
+        return
+      }
+
+      if (window.Razorpay) {
+        resolve()
+        return
+      }
+
+      const existingScript = document.querySelector(`script[src="${RAZORPAY_CHECKOUT_URL}"]`) as HTMLScriptElement | null
+      if (existingScript) {
+        existingScript.addEventListener("load", () => resolve(), { once: true })
+        existingScript.addEventListener("error", () => reject(new Error("Failed to load Razorpay SDK")), { once: true })
+        return
+      }
+
+      const script = document.createElement("script")
+      script.src = RAZORPAY_CHECKOUT_URL
+      script.async = true
+      script.onload = () => resolve()
+      script.onerror = () => reject(new Error("Failed to load Razorpay SDK"))
+      document.body.appendChild(script)
+    })
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -159,6 +194,167 @@ export default function PaymentPage() {
   const handleCustomAmountChange = (value) => {
     setCustomAmount(value)
     setUseCustomAmount(true)
+  }
+
+  const formatContactNumber = (value: string) => {
+    if (!value) return ""
+    const trimmed = value.replace(/\s+/g, "")
+    if (trimmed.startsWith("+")) {
+      return trimmed
+    }
+    // Default to India country code if one is not provided
+    return `+91${trimmed}`
+  }
+
+  const initiateRazorpayPayment = async () => {
+    setIsProcessingPayment(true)
+
+    if (!selectedCourse || !userId) {
+      alert("Missing required information")
+      setIsProcessingPayment(false)
+      return
+    }
+
+    try {
+      const currentAmount = useCustomAmount ? Number.parseFloat(customAmount) || selectedCourse.price : selectedCourse.price
+
+      const supabase = createClient()
+      const { data: purchaseData, error: purchaseError } = await supabase
+        .from("purchases")
+        .insert({
+          user_id: userId,
+          course_name: selectedCourse.title,
+          course_price: currentAmount,
+          payment_status: "pending",
+        })
+        .select()
+        .single()
+
+      if (purchaseError) {
+        console.error("[Razorpay] Error creating purchase record:", purchaseError)
+        alert("Failed to create purchase record. Please try again.")
+        setIsProcessingPayment(false)
+        return
+      }
+
+      const response = await fetch("/api/razorpay-order", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          amount: currentAmount,
+          purchaseId: purchaseData.id,
+          courseId: selectedCourse.id,
+          courseName: selectedCourse.title,
+          userId,
+          email: formData.email,
+          phone: formData.phone,
+        }),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok || !result.success || !result.order) {
+        alert(result.error || "Failed to create Razorpay order. Please try again.")
+        setIsProcessingPayment(false)
+        return
+      }
+
+      try {
+        await supabase
+          .from("purchases")
+          .update({ payment_id: result.order.id })
+          .eq("id", purchaseData.id)
+      } catch (orderUpdateError) {
+        console.warn("[Razorpay] Failed to store order id on purchase:", orderUpdateError)
+      }
+
+      await loadRazorpayCheckout()
+
+      if (!window.Razorpay) {
+        throw new Error("Razorpay SDK is not available.")
+      }
+
+      const checkoutOptions = {
+        key: result.keyId,
+        amount: String(result.order.amount),
+        currency: result.order.currency,
+        name: "UpSkill Academy",
+        description: selectedCourse.title,
+        image: "/logo.png",
+        order_id: result.order.id,
+        notes: result.order.notes ?? {},
+        prefill: {
+          name: `${formData.firstName} ${formData.lastName}`.trim() || selectedCourse.title,
+          email: formData.email,
+          contact: formatContactNumber(formData.phone),
+        },
+        theme: {
+          color: "#1E3A8A",
+        },
+        retry: {
+          enabled: true,
+          max_count: 3,
+        },
+        handler: async (paymentResponse) => {
+          try {
+            const verificationResponse = await fetch("/api/razorpay-verify", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                orderId: paymentResponse.razorpay_order_id,
+                paymentId: paymentResponse.razorpay_payment_id,
+                signature: paymentResponse.razorpay_signature,
+                purchaseId: purchaseData.id,
+              }),
+            })
+
+            const verificationResult = await verificationResponse.json()
+
+            if (!verificationResponse.ok || !verificationResult.success) {
+              throw new Error(verificationResult.error || "Payment verification failed")
+            }
+
+            setIsProcessingPayment(false)
+            router.push(
+              `/payment/success?provider=razorpay&payment_id=${encodeURIComponent(
+                paymentResponse.razorpay_payment_id
+              )}&order_id=${encodeURIComponent(paymentResponse.razorpay_order_id)}&amount=${encodeURIComponent(
+                currentAmount.toString()
+              )}&status=SUCCESS`
+            )
+          } catch (verificationError) {
+            console.error("[Razorpay] Verification error:", verificationError)
+            alert("Payment verification failed. Please contact support.")
+            setIsProcessingPayment(false)
+          }
+        },
+        modal: {
+          ondismiss: () => {
+            setIsProcessingPayment(false)
+          },
+        },
+      }
+
+      const razorpay = new window.Razorpay(checkoutOptions)
+
+      if (razorpay && typeof razorpay.on === "function") {
+        razorpay.on("payment.failed", (response) => {
+          console.error("[Razorpay] Payment failed:", response.error)
+          alert(response.error?.description || "Payment failed. Please try again.")
+          setIsProcessingPayment(false)
+        })
+      }
+
+      razorpay.open()
+    } catch (error) {
+      console.error("[Razorpay] Payment initialization error:", error)
+      alert(error instanceof Error ? error.message : "Failed to initialize Razorpay payment.")
+      setIsProcessingPayment(false)
+    }
   }
 
   const initiateSabpaisaPayment = async () => {
@@ -515,7 +711,9 @@ export default function PaymentPage() {
       userDetails: formData,
     })
 
-    if (paymentMethod === "paytm") {
+    if (paymentMethod === "razorpay") {
+      initiateRazorpayPayment()
+    } else if (paymentMethod === "paytm") {
       initiatePaytmPayment()
     } else if (paymentMethod === "payu") {
       initiatePayUPayment()
@@ -561,6 +759,16 @@ export default function PaymentPage() {
   }
 
   const finalAmount = useCustomAmount ? Number.parseFloat(customAmount) || selectedCourse.price : selectedCourse.price
+  const paymentMethodLabel =
+    paymentMethod === "razorpay"
+      ? "Razorpay"
+      : paymentMethod === "paytm"
+        ? "Paytm"
+        : paymentMethod === "payu"
+          ? "PayU"
+          : paymentMethod === "airpay"
+            ? "Airpay"
+            : "SabPaisa"
 
   return (
     <div className="min-h-screen bg-background">
@@ -733,7 +941,14 @@ export default function PaymentPage() {
               <div className="pt-4 border-t">
                 <div className="mb-4">
                   <Label className="text-base font-medium mb-2 block">Payment Method</Label>
-                  <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  <Button
+                    variant={paymentMethod === "razorpay" ? "default" : "outline"}
+                    onClick={() => setPaymentMethod("razorpay")}
+                    className="w-full"
+                  >
+                    Razorpay
+                  </Button>
                     <Button
                       disabled
                       variant={paymentMethod === "sabpaisa" ? "default" : "outline"}
@@ -788,25 +1003,7 @@ export default function PaymentPage() {
                     isProcessingPayment
                   }
                 >
-                  {isProcessingPayment
-                    ? `Redirecting to ${
-                        paymentMethod === "paytm"
-                          ? "Paytm"
-                          : paymentMethod === "payu"
-                            ? "PayU"
-                            : paymentMethod === "airpay"
-                              ? "Airpay"
-                              : "SabPaisa"
-                      }...`
-                    : `Pay with ${
-                        paymentMethod === "paytm"
-                          ? "Paytm"
-                          : paymentMethod === "payu"
-                            ? "PayU"
-                            : paymentMethod === "airpay"
-                              ? "Airpay"
-                              : "SabPaisa"
-                      }`}
+                  {isProcessingPayment ? `Redirecting to ${paymentMethodLabel}...` : `Pay with ${paymentMethodLabel}`}
                 </Button>
 
                 <p className="text-xs text-muted-foreground mt-2 text-center">

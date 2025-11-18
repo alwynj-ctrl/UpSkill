@@ -11,10 +11,35 @@ import { useEffect, useState } from "react"
 
 export default function PaymentSuccessPage() {
   const searchParams = useSearchParams()
-  const [paymentDetails, setPaymentDetails] = useState(null)
+  const [paymentDetails, setPaymentDetails] = useState<{
+    transactionId: string
+    amount: string | null
+    orderId: string | null
+    status: string | null
+    provider?: string
+  } | null>(null)
 
   useEffect(() => {
-    // Extract payment details from URL parameters
+    const provider = searchParams.get("provider")
+
+    if (provider === "razorpay") {
+      const paymentId = searchParams.get("payment_id")
+      const orderId = searchParams.get("order_id")
+      const amount = searchParams.get("amount")
+      const status = searchParams.get("status") || "SUCCESS"
+
+      if (paymentId || orderId) {
+        setPaymentDetails({
+          transactionId: paymentId || orderId || "",
+          amount,
+          orderId,
+          status,
+          provider: "Razorpay",
+        })
+      }
+      return
+    }
+
     const transactionId = searchParams.get("TRANSACTIONID")
     const amount = searchParams.get("AMOUNT")
     const orderId = searchParams.get("ORDERID")
@@ -59,14 +84,24 @@ export default function PaymentSuccessPage() {
                     <span>Order ID:</span>
                     <span className="font-mono">{paymentDetails.orderId}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span>Amount:</span>
-                    <span>₹{paymentDetails.amount}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Status:</span>
-                    <span className="text-green-600 font-medium">{paymentDetails.status}</span>
-                  </div>
+                  {paymentDetails.amount && (
+                    <div className="flex justify-between">
+                      <span>Amount:</span>
+                      <span>₹{paymentDetails.amount}</span>
+                    </div>
+                  )}
+                  {paymentDetails.status && (
+                    <div className="flex justify-between">
+                      <span>Status:</span>
+                      <span className="text-green-600 font-medium">{paymentDetails.status}</span>
+                    </div>
+                  )}
+                  {paymentDetails.provider && (
+                    <div className="flex justify-between">
+                      <span>Provider:</span>
+                      <span>{paymentDetails.provider}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
