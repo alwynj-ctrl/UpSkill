@@ -1,8 +1,8 @@
 import Razorpay from "razorpay"
 import crypto from "crypto"
 
-const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID || "rzp_live_RhAomknCi1cKEB"
-const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || "FZJsEy7EeMtqE8LmvrprDfjF"
+const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID
+const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET
 
 let razorpayClient: Razorpay | null = null
 
