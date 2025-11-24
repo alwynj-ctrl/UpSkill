@@ -7,7 +7,7 @@ export default function CancellationPage() {
       <Navigation />
 
       {/* Header */}
-      <section className="bg-card py-16 px-4">
+      <section className="hero-bleed bg-card py-16">
         <div className="container mx-auto">
           <h1 className="text-4xl md:text-5xl font-bold text-center">CANCELLATION & REFUND POLICY</h1>
         </div>

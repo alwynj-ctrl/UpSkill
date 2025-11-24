@@ -1,9 +1,10 @@
 "use client"
 
+import Link from "next/link"
 import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -97,6 +98,146 @@ const courses = [
     duration: "6 months",
     mode: "Online/Offline",
   },
+  {
+    id: "full-stack-java",
+    title: "Full Stack Java Development",
+    price: 119999,
+    image: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?auto=format&fit=crop&w=1200&q=80",
+    description:
+      "End-to-end application development with Core Java, Spring Boot, modern frontend frameworks, databases, testing, and deployments.",
+    duration: "4–9 months",
+    mode: "Online / Hybrid",
+  },
+  {
+    id: "python-development",
+    title: "Python Programming & Application Development",
+    price: 74999,
+    image: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80",
+    description:
+      "Beginner-friendly Python path covering fundamentals, web frameworks, APIs, automation, and database integration.",
+    duration: "2–6 months",
+    mode: "Online",
+  },
+  {
+    id: "data-analytics-bi",
+    title: "Data Analytics & Business Intelligence",
+    price: 149999,
+    image: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80",
+    description:
+      "Analytics toolkit with Excel, SQL, Python, visualization tools, and dashboard storytelling using real datasets.",
+    duration: "3–8 months",
+    mode: "Online / Hybrid",
+  },
+  {
+    id: "data-science-ml",
+    title: "Data Science & Machine Learning",
+    price: 249999,
+    image: "https://images.unsplash.com/photo-1503023345310-bd7c1de61c7d?auto=format&fit=crop&w=1200&q=80",
+    description:
+      "Advanced AI/ML curriculum spanning statistics, deep learning, NLP, TensorFlow/PyTorch, and cloud deployment.",
+    duration: "6–12 months",
+    mode: "Online / Hybrid",
+  },
+  {
+    id: "devops-cloud",
+    title: "DevOps & Cloud Engineering",
+    price: 179999,
+    image: "https://images.unsplash.com/photo-1581093806997-124204d9fa9d?auto=format&fit=crop&w=1200&q=80",
+    description:
+      "DevOps lifecycle coverage: Linux, Git, CI/CD, Docker, Kubernetes, Terraform, and AWS/Azure cloud infrastructure.",
+    duration: "4–10 months",
+    mode: "Online / Hybrid",
+  },
+  {
+    id: "cybersecurity-ethical-hacking",
+    title: "Cybersecurity & Ethical Hacking",
+    price: 219999,
+    image: "https://images.unsplash.com/photo-1510511459019-5dda7724fd87?auto=format&fit=crop&w=1200&q=80",
+    description:
+      "Security programme covering vulnerability assessment, pen testing, SOC operations, SIEM tooling, and malware analysis.",
+    duration: "5–12 months",
+    mode: "Online / Hybrid",
+  },
+  {
+    id: "ui-ux-frontend",
+    title: "UI/UX Design & Frontend Development",
+    price: 89999,
+    image: "https://images.unsplash.com/photo-1559028012-481c04fa702d?auto=format&fit=crop&w=1200&q=80",
+    description:
+      "Design-thinking plus frontend build track using Figma, HTML/CSS/JS, React, responsive design, and portfolio projects.",
+    duration: "2–6 months",
+    mode: "Online",
+  },
+  {
+    id: "cloud-computing",
+    title: "Cloud Computing (AWS / Azure / GCP)",
+    price: 109900,
+    image: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=1200&q=80",
+    description:
+      "Cloud certification prep covering compute, storage, networking, IAM, VPC, load balancing, and architecture design.",
+    duration: "3–6 months",
+    mode: "Online",
+  },
+  {
+    id: "german-master-bundle",
+    title: "German Language Training (A1–C1)",
+    price: 115000,
+    image: "/german-language-learning-online.jpg",
+    description:
+      "German master bundle advancing from greetings to professional fluency with Goethe C1 preparation.",
+    duration: "A1–C1 tracks",
+    mode: "Online / Classroom",
+  },
+  {
+    id: "french-master-bundle",
+    title: "French Language Training (A1–C1)",
+    price: 105000,
+    image: "https://images.unsplash.com/photo-1525182008055-f88b95ff7980?auto=format&fit=crop&w=1200&q=80",
+    description:
+      "Comprehensive French mastery program emphasizing pronunciation, communication, grammar, and cultural immersion.",
+    duration: "A1–C1 tracks",
+    mode: "Online / Classroom",
+  },
+  {
+    id: "spanish-master-bundle",
+    title: "Spanish Language Training (A1–C1)",
+    price: 95000,
+    image: "https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?auto=format&fit=crop&w=1200&q=80",
+    description:
+      "Structured Spanish journey to achieve fluent communication and DELE certification readiness.",
+    duration: "A1–C1 tracks",
+    mode: "Online / Classroom",
+  },
+  {
+    id: "japanese-jlpt",
+    title: "Japanese Language Training (JLPT N5–N1)",
+    price: 145000,
+    image: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80",
+    description:
+      "JLPT-aligned track strengthening Kanji, grammar, and business communication for careers in Japan.",
+    duration: "N5–N1 tracks",
+    mode: "Online / Classroom",
+  },
+  {
+    id: "korean-topik",
+    title: "Korean Language Training (TOPIK 1–6)",
+    price: 120000,
+    image: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=1200&q=80",
+    description:
+      "TOPIK-ready Korean learning path from Hangul basics to advanced business communication and writing.",
+    duration: "TOPIK 1–6 tracks",
+    mode: "Online / Classroom",
+  },
+  {
+    id: "english-communication",
+    title: "English Communication (Beginner → Advanced)",
+    price: 29999,
+    image: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=80",
+    description:
+      "Practical English communication bundle spanning grammar, workplace writing, presentations, and leadership speaking.",
+    duration: "Flexible tracks",
+    mode: "Online / Classroom",
+  },
 ]
 
 export default function PaymentPage() {
@@ -111,6 +252,7 @@ export default function PaymentPage() {
   const [userId, setUserId] = useState(null)
   const [paymentMethod, setPaymentMethod] = useState("razorpay")
   const [isProcessingPayment, setIsProcessingPayment] = useState(false)
+  const [hasAcceptedTerms, setHasAcceptedTerms] = useState(false)
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -280,7 +422,7 @@ export default function PaymentPage() {
         key: result.keyId,
         amount: String(result.order.amount),
         currency: result.order.currency,
-        name: "UpSkill Academy",
+        name: "UpSkill",
         description: selectedCourse.title,
         image: "/logo.png",
         order_id: result.order.id,
@@ -742,14 +884,20 @@ export default function PaymentPage() {
 
   if (!selectedCourse) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-slate-50">
         <Navigation />
         <div className="container mx-auto px-4 py-16">
-          <Card>
-            <CardContent className="p-8 text-center">
-              <h1 className="text-2xl font-bold mb-4">Course Not Found</h1>
-              <p className="text-muted-foreground mb-4">Please select a course from the courses page.</p>
-              <Button onClick={() => window.history.back()}>Go Back</Button>
+          <Card className="max-w-2xl mx-auto text-center border-emerald-100 shadow-sm">
+            <CardContent className="p-10 space-y-4">
+              <p className="text-xs uppercase tracking-[0.3em] text-emerald-600">Checkout</p>
+              <h1 className="text-3xl font-semibold">No course selected</h1>
+              <p className="text-muted-foreground">Please return to the courses page and choose the program you want to enroll in.</p>
+              <div className="flex gap-3 justify-center pt-2">
+                <Button onClick={() => window.history.back()}>Go Back</Button>
+                <Button variant="outline" onClick={() => (window.location.href = "/courses")}>
+                  View Courses
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -771,107 +919,119 @@ export default function PaymentPage() {
             : "SabPaisa"
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-slate-50">
       <Navigation />
 
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Course Details */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Course Details</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="aspect-video bg-muted rounded-lg mb-4 overflow-hidden">
+      <div className="hero-bleed bg-gradient-to-br from-emerald-900 via-emerald-700 to-emerald-500 text-white py-12">
+        <div className="container mx-auto px-4 text-center space-y-4 max-w-3xl">
+          <p className="text-xs uppercase tracking-[0.3em] text-white/70">Secure Checkout</p>
+          <h1 className="text-3xl md:text-4xl font-semibold">
+            Complete Enrollment · {selectedCourse.title}
+          </h1>
+          <p className="text-white/80 text-sm md:text-base">
+            Confirm your learner details, pick a payment method, and reserve your seat in the next cohort.
+          </p>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 py-10 grid gap-8 lg:grid-cols-[3fr,2fr]">
+        {/* Course Summary */}
+        <Card className="border-emerald-100/70 shadow-sm">
+          <CardContent className="p-6 space-y-6">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center">
+              <div className="flex-1 space-y-2">
+                <p className="text-xs uppercase tracking-[0.3em] text-emerald-600">{selectedCourse.mode}</p>
+                <h2 className="text-2xl font-semibold">{selectedCourse.title}</h2>
+                <p className="text-sm text-slate-600">{selectedCourse.description}</p>
+              </div>
+              <div className="md:w-48 rounded-lg overflow-hidden">
                 <img
                   src={selectedCourse.image || "/placeholder.svg"}
                   alt={selectedCourse.title}
-                  className="w-full h-full object-cover"
+                  className="h-32 w-full object-cover"
                 />
               </div>
-              <h3 className="text-xl font-bold mb-2">{selectedCourse.title}</h3>
-              <p className="text-muted-foreground mb-4">{selectedCourse.description}</p>
+            </div>
 
-              <div className="space-y-2 mb-4">
-                <div className="flex justify-between">
-                  <span className="font-medium">Duration:</span>
-                  <span>{selectedCourse.duration}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">Mode:</span>
-                  <span>{selectedCourse.mode}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">Original Price:</span>
-                  <span className="text-lg font-bold">₹{selectedCourse.price.toLocaleString()}</span>
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+              <div className="rounded-lg border border-emerald-100 bg-emerald-50/50 p-4">
+                <p className="text-xs uppercase tracking-[0.3em] text-emerald-700 mb-1">Duration</p>
+                <p className="font-semibold">{selectedCourse.duration}</p>
               </div>
-
-              {/* Custom Amount Section */}
-              <div className="border-t pt-4">
-                <Label className="text-base font-medium mb-2 block">Customize Amount (Optional)</Label>
-                <p className="text-sm text-muted-foreground mb-3">
-                  You can adjust the course fee based on your requirements or financial situation.
-                </p>
-                <div className="flex gap-2">
-                  <div className="flex-1">
-                    <Input
-                      type="number"
-                      placeholder="Enter custom amount"
-                      value={customAmount}
-                      onChange={(e) => handleCustomAmountChange(e.target.value)}
-                      min="1000"
-                    />
-                  </div>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setCustomAmount(selectedCourse.price.toString())
-                      setUseCustomAmount(false)
-                    }}
-                  >
-                    Reset
-                  </Button>
-                </div>
-                <div className="mt-3 p-3 bg-muted rounded-lg">
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium">Final Amount:</span>
-                    <span className="text-xl font-bold text-primary">₹{finalAmount.toLocaleString()}</span>
-                  </div>
-                </div>
+              <div className="rounded-lg border border-emerald-100 bg-emerald-50/50 p-4">
+                <p className="text-xs uppercase tracking-[0.3em] text-emerald-700 mb-1">Mode</p>
+                <p className="font-semibold">{selectedCourse.mode}</p>
               </div>
-            </CardContent>
-          </Card>
+              <div className="rounded-lg border border-emerald-100 bg-emerald-50/50 p-4">
+                <p className="text-xs uppercase tracking-[0.3em] text-emerald-700 mb-1">Base Fee</p>
+                <p className="font-semibold">₹{selectedCourse.price.toLocaleString()}</p>
+              </div>
+            </div>
 
-          {/* User Details Form */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Your Details</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+            <div className="border-t pt-4 space-y-3">
+              <div className="flex items-center justify-between">
                 <div>
-                  <Label htmlFor="firstName">First Name *</Label>
-                  <Input
-                    id="firstName"
-                    value={formData.firstName}
-                    onChange={(e) => handleInputChange("firstName", e.target.value)}
-                    required
-                  />
+                  <Label className="text-sm font-semibold">Custom Amount (optional)</Label>
+                  <p className="text-xs text-slate-500">Adjust fee for scholarships or custom plans.</p>
                 </div>
-                <div>
-                  <Label htmlFor="lastName">Last Name *</Label>
-                  <Input
-                    id="lastName"
-                    value={formData.lastName}
-                    onChange={(e) => handleInputChange("lastName", e.target.value)}
-                    required
-                  />
-                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setCustomAmount(selectedCourse.price.toString())
+                    setUseCustomAmount(false)
+                  }}
+                >
+                  Reset
+                </Button>
               </div>
+              <Input
+                type="number"
+                placeholder="Enter custom amount"
+                value={customAmount}
+                onChange={(e) => handleCustomAmountChange(e.target.value)}
+                min="1000"
+              />
+              <div className="rounded-xl bg-slate-100 px-4 py-3 flex items-center justify-between">
+                <span className="text-sm text-slate-600">Final Amount</span>
+                <span className="text-2xl font-semibold text-emerald-700">₹{finalAmount.toLocaleString()}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
+        {/* Checkout Form */}
+        <Card className="border-slate-200 shadow-sm">
+          <CardContent className="p-6 space-y-5">
+            <div className="space-y-1">
+              <p className="text-xs uppercase tracking-[0.3em] text-emerald-600">Student Details</p>
+              <h3 className="text-xl font-semibold">Who are we enrolling?</h3>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="email">Email Address *</Label>
+                <Label htmlFor="firstName">First Name *</Label>
+                <Input
+                  id="firstName"
+                  value={formData.firstName}
+                  onChange={(e) => handleInputChange("firstName", e.target.value)}
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="lastName">Last Name *</Label>
+                <Input
+                  id="lastName"
+                  value={formData.lastName}
+                  onChange={(e) => handleInputChange("lastName", e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="email">Email *</Label>
                 <Input
                   id="email"
                   type="email"
@@ -881,9 +1041,8 @@ export default function PaymentPage() {
                   disabled
                 />
               </div>
-
               <div>
-                <Label htmlFor="phone">Phone Number *</Label>
+                <Label htmlFor="phone">Phone *</Label>
                 <Input
                   id="phone"
                   type="tel"
@@ -892,127 +1051,146 @@ export default function PaymentPage() {
                   required
                 />
               </div>
+            </div>
 
+            <div>
+              <Label htmlFor="address">Address</Label>
+              <Textarea
+                id="address"
+                value={formData.address}
+                onChange={(e) => handleInputChange("address", e.target.value)}
+                rows={2}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <Label htmlFor="address">Address</Label>
-                <Textarea
-                  id="address"
-                  value={formData.address}
-                  onChange={(e) => handleInputChange("address", e.target.value)}
-                  rows={2}
-                />
+                <Label htmlFor="city">City</Label>
+                <Input id="city" value={formData.city} onChange={(e) => handleInputChange("city", e.target.value)} />
               </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="city">City</Label>
-                  <Input id="city" value={formData.city} onChange={(e) => handleInputChange("city", e.target.value)} />
-                </div>
-                <div>
-                  <Label htmlFor="state">State</Label>
-                  <Input
-                    id="state"
-                    value={formData.state}
-                    onChange={(e) => handleInputChange("state", e.target.value)}
-                  />
-                </div>
-              </div>
-
               <div>
-                <Label htmlFor="pincode">PIN Code</Label>
+                <Label htmlFor="state">State</Label>
+                <Input id="state" value={formData.state} onChange={(e) => handleInputChange("state", e.target.value)} />
+              </div>
+              <div>
+                <Label htmlFor="pincode">PIN</Label>
                 <Input
                   id="pincode"
                   value={formData.pincode}
                   onChange={(e) => handleInputChange("pincode", e.target.value)}
                 />
               </div>
+            </div>
 
-              <div>
-                <Label htmlFor="specialRequirements">Special Requirements</Label>
-                <Textarea
-                  id="specialRequirements"
-                  placeholder="Any specific requirements or questions about the course..."
-                  value={formData.specialRequirements}
-                  onChange={(e) => handleInputChange("specialRequirements", e.target.value)}
-                  rows={3}
-                />
+            <div>
+              <Label htmlFor="specialRequirements">Notes</Label>
+              <Textarea
+                id="specialRequirements"
+                placeholder="Anything we should know before onboarding?"
+                value={formData.specialRequirements}
+                onChange={(e) => handleInputChange("specialRequirements", e.target.value)}
+                rows={3}
+              />
+            </div>
+
+            <div className="space-y-3 border-t pt-4">
+              <div className="space-y-1">
+                <Label className="text-base font-medium">Payment Method</Label>
+                <p className="text-xs text-slate-500">Choose your preferred gateway.</p>
               </div>
-
-              <div className="pt-4 border-t">
-                <div className="mb-4">
-                  <Label className="text-base font-medium mb-2 block">Payment Method</Label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  <Button
-                    variant={paymentMethod === "razorpay" ? "default" : "outline"}
-                    onClick={() => setPaymentMethod("razorpay")}
-                    className="w-full"
-                  >
-                    Razorpay
-                  </Button>
-                    <Button
-                      disabled
-                      variant={paymentMethod === "sabpaisa" ? "default" : "outline"}
-                      onClick={() => setPaymentMethod("sabpaisa")}
-                      className="w-full"
-                    >
-                      SabPaisa
-                    </Button>
-                    <Button
-                      variant={paymentMethod === "airpay" ? "default" : "outline"}
-                      onClick={() => setPaymentMethod("airpay")}
-                      className="w-full"
-                    >
-                      Airpay
-                    </Button>
-                    <Button
-                      variant={paymentMethod === "payu" ? "default" : "outline"}
-                      onClick={() => setPaymentMethod("payu")}
-                      className="w-full"
-                    >
-                      PayU
-                    </Button>
-                    <Button
-                      disabled
-                      variant={paymentMethod === "paytm" ? "default" : "outline"}
-                      onClick={() => setPaymentMethod("paytm")}
-                      className="w-full"
-                    >
-                      Paytm
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="bg-muted p-4 rounded-lg mb-4">
-                  <h4 className="font-medium mb-2">Payment Summary</h4>
-                  <div className="flex justify-between items-center">
-                    <span>Total Amount:</span>
-                    <span className="text-xl font-bold text-primary">₹{finalAmount.toLocaleString()}</span>
-                  </div>
-                </div>
-
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 <Button
-                  id="pay-button"
+                  variant={paymentMethod === "razorpay" ? "default" : "outline"}
+                  onClick={() => setPaymentMethod("razorpay")}
                   className="w-full"
-                  size="lg"
-                  onClick={handlePayment}
-                  disabled={
-                    !formData.firstName ||
-                    !formData.lastName ||
-                    !formData.email ||
-                    !formData.phone ||
-                    isProcessingPayment
-                  }
                 >
-                  {isProcessingPayment ? `Redirecting to ${paymentMethodLabel}...` : `Pay with ${paymentMethodLabel}`}
+                  Razorpay
                 </Button>
-
-                <p className="text-xs text-muted-foreground mt-2 text-center">
-                  By proceeding, you agree to our Terms & Conditions and Privacy Policy
-                </p>
+                <Button
+                  variant={paymentMethod === "airpay" ? "default" : "outline"}
+                  onClick={() => setPaymentMethod("airpay")}
+                  className="w-full"
+                >
+                  Airpay
+                </Button>
+                <Button
+                  variant={paymentMethod === "payu" ? "default" : "outline"}
+                  onClick={() => setPaymentMethod("payu")}
+                  className="w-full"
+                >
+                  PayU
+                </Button>
+                <Button
+                  disabled
+                  variant={paymentMethod === "sabpaisa" ? "default" : "outline"}
+                  onClick={() => setPaymentMethod("sabpaisa")}
+                  className="w-full"
+                >
+                  SabPaisa
+                </Button>
+                <Button
+                  disabled
+                  variant={paymentMethod === "paytm" ? "default" : "outline"}
+                  onClick={() => setPaymentMethod("paytm")}
+                  className="w-full"
+                >
+                  Paytm
+                </Button>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+
+            <div className="rounded-2xl bg-slate-100 p-4 space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>Course Fee</span>
+                <span>₹{selectedCourse.price.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span>Custom Adjustment</span>
+                <span>{useCustomAmount ? "Applied" : "Default"}</span>
+              </div>
+              <div className="flex justify-between items-center border-t pt-2">
+                <span className="text-base font-medium">Amount Payable</span>
+                <span className="text-2xl font-bold text-emerald-700">₹{finalAmount.toLocaleString()}</span>
+              </div>
+            </div>
+
+            <label className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50/70 p-4 text-sm text-slate-600">
+              <input
+                type="checkbox"
+                className="mt-1 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                checked={hasAcceptedTerms}
+                onChange={(e) => setHasAcceptedTerms(e.target.checked)}
+              />
+              <span>
+                I confirm that I have read and agree to the{" "}
+                <Link href="/terms" className="text-emerald-700 underline underline-offset-2">
+                  Terms & Conditions
+                </Link>{" "}
+                and{" "}
+                <Link href="/privacy" className="text-emerald-700 underline underline-offset-2">
+                  Privacy Policy
+                </Link>
+                . I understand that the selected payment method will be used to process my enrollment.
+              </span>
+            </label>
+
+            <Button
+              id="pay-button"
+              className="w-full h-12 text-base"
+              onClick={handlePayment}
+              disabled={
+                !formData.firstName ||
+                !formData.lastName ||
+                !formData.email ||
+                !formData.phone ||
+                isProcessingPayment ||
+                !hasAcceptedTerms
+              }
+            >
+              {isProcessingPayment ? `Redirecting to ${paymentMethodLabel}...` : `Pay with ${paymentMethodLabel}`}
+            </Button>
+          </CardContent>
+        </Card>
       </div>
 
       <Footer />

@@ -40,6 +40,19 @@
   --sidebar-ring: oklch(0.55 0.15 160);
   --font-inter: "Inter", sans-serif;
   --font-roboto-mono: "Roboto Mono", monospace;
+  --page-x-padding: 1rem;
+}
+
+@media (min-width: 640px) {
+  :root {
+    --page-x-padding: 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --page-x-padding: 4rem;
+  }
 }
 
 /* Added proper dark mode theme configuration using @theme dark: syntax */
@@ -121,5 +134,25 @@
   }
   body {
     @apply bg-background text-foreground font-sans antialiased;
+    padding-inline: var(--page-x-padding);
+  }
+
+  .full-bleed {
+    margin-left: calc(-1 * var(--page-x-padding));
+    margin-right: calc(-1 * var(--page-x-padding));
+    width: calc(100% + (var(--page-x-padding) * 2));
+  }
+
+  .hero-bleed {
+    margin-left: calc(-1 * var(--page-x-padding));
+    margin-right: calc(-1 * var(--page-x-padding));
+    width: calc(100% + (var(--page-x-padding) * 2));
+    padding-left: var(--page-x-padding);
+    padding-right: var(--page-x-padding);
+  }
+
+  .hero-bleed > .container {
+    margin-left: auto;
+    margin-right: auto;
   }
 }
