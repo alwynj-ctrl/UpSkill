@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { createClient } from "@/lib/supabase/client"
 import { useEffect, useState } from "react"
-import { User } from "lucide-react"
+import { Menu, User, X } from "lucide-react"
 import { UpskillLogo } from "@/app/upskill-logo"
 
 const navigation = [
@@ -20,6 +20,7 @@ export function Navigation() {
   const pathname = usePathname()
   const [user, setUser] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   useEffect(() => {
     const checkUser = async () => {
@@ -100,6 +101,68 @@ export function Navigation() {
               </>
             )}
           </nav>
+
+          <button
+            type="button"
+            className="md:hidden inline-flex items-center justify-center rounded-full border border-slate-200 p-2 text-slate-600 hover:bg-slate-50"
+            onClick={() => setIsMenuOpen((prev) => !prev)}
+            aria-label="Toggle navigation menu"
+          >
+            {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
+      </div>
+      <div
+        className={cn(
+          "md:hidden border-t border-slate-200 bg-white/95 px-6 py-4 shadow-sm transition-[max-height,opacity] duration-300 ease-in-out",
+          isMenuOpen ? "max-h-screen opacity-100" : "max-h-0 overflow-hidden opacity-0",
+        )}
+      >
+        <div className="space-y-4">
+          {navigation.map((item) => {
+            const isActive = pathname === item.href
+            return (
+              <Link
+                key={item.name}
+                href={item.href}
+                className={cn(
+                  "flex justify-between border-b border-slate-100 pb-3 text-sm font-semibold uppercase tracking-[0.25em]",
+                  isActive ? "text-slate-900" : "text-slate-500",
+                )}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                {item.name}
+                <span className="text-xs">{isActive ? "•" : ""}</span>
+              </Link>
+            )
+          })}
+          {!isLoading && (
+            <div className="pt-2">
+              {user ? (
+                <Button
+                  asChild
+                  size="sm"
+                  className="w-full rounded-full bg-primary text-white hover:bg-primary/90"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <Link href="/dashboard" className="flex items-center justify-center gap-2">
+                    <User className="h-4 w-4" />
+                    Dashboard
+                  </Link>
+                </Button>
+              ) : (
+                <Button
+                  asChild
+                  size="sm"
+                  variant="outline"
+                  className="w-full rounded-full border-slate-200 text-slate-700"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <Link href="/auth/login">Login</Link>
+                </Button>
+              )}
+            </div>
+          )}
         </div>
       </div>
       <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-primary/40 to-transparent" />

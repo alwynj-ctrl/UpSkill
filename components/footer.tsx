@@ -32,11 +32,11 @@ export function Footer() {
             </ul>
           </div>
 
-          <div className="space-y-6">
+            <div className="space-y-6">
             <p className="text-xs uppercase tracking-[0.35em] text-emerald-400">Contact us</p>
             <div className="space-y-6">
               <div>
-                <p className="text-2xl font-semibold text-white">UpSkill Technology</p>
+                <p className="text-2xl font-semibold text-white">UpSkill Workforce Private Limited</p>
                 <p className="text-sm text-slate-400 mt-1">Global Talent & Data Solutions</p>
               </div>
               <div className="space-y-4 text-sm text-slate-300">
@@ -79,7 +79,7 @@ export function Footer() {
         <div className="border-t border-slate-900 pt-8 text-center text-sm text-slate-500">
           <p>
             ©{new Date().getFullYear()} Copyright{" "}
-            <span className="text-white font-semibold">Upskill Technology.</span> All Rights Reserved
+            <span className="text-white font-semibold">Upskill Workforce.</span> All Rights Reserved
           </p>
         </div>
       </div>

@@ -181,7 +181,7 @@ export default function HomePage() {
             <ul className="mt-8 space-y-4 text-sm text-white/80">
               <li>• Role-wise diagnostics and learner journeys</li>
               <li>• Pod-based delivery with SME coaches & talent partners</li>
-              <li>• Capability scorecards, placement bridges, and leadership playbooks</li>
+              <li>• Capability scorecards and leadership playbooks</li>
             </ul>
             <Button size="lg" className="mt-8 bg-white text-slate-900 hover:bg-white/90" asChild>
               <Link href="/about">Meet the team</Link>
@@ -211,9 +211,9 @@ export default function HomePage() {
                 <p className="text-xs text-slate-500">Capability scorecards</p>
               </div>
               <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Placements</p>
-                <p className="text-2xl font-semibold text-slate-900">120+ partners</p>
-                <p className="text-xs text-slate-500">Dedicated ecosystem</p>
+                <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Partners</p>
+                <p className="text-2xl font-semibold text-slate-900">120+</p>
+                <p className="text-xs text-slate-500">Embedded ecosystem</p>
               </div>
             </div>
             <Button variant="outline" className="mt-10 text-emerald-700 border-emerald-200" asChild>
@@ -229,7 +229,7 @@ export default function HomePage() {
               <p className="text-xs uppercase tracking-[0.35em] text-emerald-700 font-semibold">Spotlight programs</p>
               <h2 className="text-3xl md:text-4xl font-bold">Fast-track credentials crafted with hiring partners</h2>
               <p className="text-slate-600">
-                Each cohort blends live mentoring, assessments, and placement bridges. Choose your next milestone.
+                Each cohort blends live mentoring, assessments, and tailored career playbooks. Choose your next milestone.
               </p>
             </div>
 
