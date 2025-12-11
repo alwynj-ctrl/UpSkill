@@ -29,17 +29,19 @@ export default function CancellationPage() {
 
             <div>
               <h3 className="text-lg font-semibold mb-4">Cancellations:</h3>
-              <p className="text-muted-foreground">
-                You can cancel your booking within 24 hours of enrolling in a course or scheduling a coaching session.
-                Cancellations may not be accepted if the course has already started, coaching has begun, or learning
-                materials have been shared.
-              </p>
+              <div className="space-y-3 text-muted-foreground">
+                <p>You can cancel your booking within 24 hours of enrolling in a course or scheduling a coaching session.</p>
+                <p>
+                  Cancellations may not be accepted if the course has already started, coaching has begun, or learning
+                  materials have been shared.
+                </p>
+              </div>
             </div>
 
             <div>
               <h3 className="text-lg font-semibold mb-4">Refund Processing Time:</h3>
               <p className="text-muted-foreground">
-                If a refund is approved, it will be credited within 5 to 8 working days to the original payment method.
+                If a refund is approved, it will be credited within 5 to 7 working days to the original payment method.
               </p>
             </div>
 

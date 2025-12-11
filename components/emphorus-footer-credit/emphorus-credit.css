@@ -1,0 +1,328 @@
+/* Emphorus Footer Credit Component Styles */
+
+.emphorus-credit-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 1.5rem;
+  padding-bottom: 1rem;
+}
+
+.emphorus-credit-link {
+  display: inline-block;
+  text-decoration: none;
+  transition: transform 0.3s ease, filter 0.3s ease;
+  cursor: pointer;
+}
+
+.emphorus-credit-link:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+
+.emphorus-credit-link:hover .emphorus-credit-wrapper {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 40%, #1e293b 60%, #0f172a 100%);
+  border-color: rgba(255, 217, 61, 0.3);
+  box-shadow: 
+    inset 0 1px 5px rgba(0, 0, 0, 0.5),
+    0 4px 15px rgba(255, 217, 61, 0.2),
+    0 0 25px rgba(88, 169, 140, 0.1);
+}
+
+.emphorus-credit-link:hover .emphorus-credit-text {
+  color: rgba(255, 255, 255, 1);
+}
+
+.emphorus-credit-link:hover .emphorus-credit-wrapper::before {
+  opacity: 1;
+}
+
+.emphorus-credit-link:active {
+  transform: translateY(0px);
+}
+
+.emphorus-credit-wrapper {
+  position: relative;
+  width: 170px;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #0a0e1a 0%, #1e293b 40%, #0f172a 60%, #0a0e1a 100%);
+  border-radius: 25px;
+  padding: 0 12px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  transition: all 0.3s ease;
+  overflow: hidden;
+  box-shadow: inset 0 1px 5px rgba(0, 0, 0, 0.5);
+}
+
+/* Starry night sky background */
+.emphorus-credit-wrapper::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(1px 1px at 20% 30%, white, transparent),
+    radial-gradient(1px 1px at 60% 70%, white, transparent),
+    radial-gradient(0.5px 0.5px at 50% 50%, white, transparent),
+    radial-gradient(0.5px 0.5px at 80% 10%, white, transparent),
+    radial-gradient(1px 1px at 90% 60%, white, transparent),
+    radial-gradient(0.5px 0.5px at 33% 80%, white, transparent),
+    radial-gradient(0.5px 0.5px at 15% 60%, white, transparent),
+    radial-gradient(1px 1px at 70% 40%, white, transparent),
+    radial-gradient(0.5px 0.5px at 40% 20%, white, transparent),
+    radial-gradient(0.5px 0.5px at 25% 45%, white, transparent),
+    radial-gradient(0.8px 0.8px at 10% 15%, rgba(255, 255, 255, 0.9), transparent),
+    radial-gradient(0.5px 0.5px at 95% 85%, rgba(255, 255, 255, 0.8), transparent),
+    radial-gradient(0.8px 0.8px at 45% 65%, rgba(255, 255, 255, 0.9), transparent),
+    radial-gradient(0.5px 0.5px at 75% 25%, rgba(255, 217, 61, 0.6), transparent),
+    radial-gradient(0.5px 0.5px at 55% 90%, rgba(88, 169, 140, 0.6), transparent),
+    radial-gradient(1px 1px at 85% 45%, rgba(255, 255, 255, 0.9), transparent),
+    radial-gradient(0.5px 0.5px at 12% 75%, rgba(220, 184, 86, 0.5), transparent),
+    radial-gradient(0.5px 0.5px at 88% 30%, rgba(88, 169, 140, 0.5), transparent);
+  background-size: 170px 40px;
+  background-position: 0 0;
+  animation: emphorus-stars-twinkle 3s ease-in-out infinite;
+  opacity: 0.8;
+  pointer-events: none;
+}
+
+.emphorus-credit-text {
+  position: absolute;
+  font-size: 10px;
+  font-weight: 500;
+  color: rgba(226, 232, 240, 0.9);
+  z-index: 1;
+  pointer-events: none;
+  letter-spacing: 0.2px;
+  text-align: center;
+  transition: color 0.3s ease;
+  white-space: nowrap;
+}
+
+.emphorus-heart {
+  display: inline-block;
+  animation: emphorus-heartbeat 1.5s ease-in-out infinite;
+  color: #FFD93D;
+  font-size: 10px;
+  text-shadow: 0 0 5px rgba(255, 217, 61, 0.6);
+}
+
+.emphorus-brand {
+  font-weight: 600;
+  font-size: 12px;
+  background: linear-gradient(
+    90deg,
+    #4a5568 0%,
+    #6b7280 20%,
+    #8b7a8b 40%,
+    #b88a8a 60%,
+    #d4958d 80%,
+    #e8a798 100%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  background-size: 200% 100%;
+  animation: emphorus-brand-gradient-flow 4s ease infinite;
+}
+
+.emphorus-logo-container {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  margin-left: 2px;
+}
+
+.emphorus-logo {
+  display: inline-block;
+  vertical-align: middle;
+  filter: drop-shadow(0 0 3px rgba(232, 167, 152, 0.3));
+  animation: emphorus-logo-glow 3s ease infinite;
+}
+
+.emphorus-logo .emphorus-logo-outline,
+.emphorus-logo .emphorus-logo-gem,
+.emphorus-logo .emphorus-logo-stem {
+  animation: emphorus-logo-pulse 2s ease-in-out infinite;
+}
+
+@keyframes emphorus-logo-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 3px rgba(232, 167, 152, 0.3));
+  }
+  50% {
+    filter: drop-shadow(0 0 5px rgba(232, 167, 152, 0.5));
+  }
+}
+
+@keyframes emphorus-logo-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.emphorus-motionblur {
+  position: relative;
+  width: 100%;
+  height: 20px;
+  z-index: 5;
+}
+
+.emphorus-motion-box {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: radial-gradient(circle at center, 
+    #ffffff 0%, 
+    #FFD93D 30%, 
+    #58A98C 70%,
+    transparent 100%
+  );
+  animation: emphorus-shooting-star 4s cubic-bezier(0.4, 0.0, 0.2, 1) infinite;
+  box-shadow: 
+    0 0 10px rgba(255, 255, 255, 0.8),
+    0 0 20px rgba(255, 217, 61, 0.6),
+    0 0 30px rgba(88, 169, 140, 0.4);
+}
+
+.emphorus-motion-box::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  width: 60px;
+  height: 1px;
+  transform: translateY(-50%);
+  background: linear-gradient(to left,
+    rgba(255, 255, 255, 0.9) 0%,
+    rgba(255, 217, 61, 0.7) 20%,
+    rgba(88, 169, 140, 0.5) 50%,
+    rgba(220, 184, 86, 0.3) 70%,
+    transparent 100%
+  );
+  border-radius: 50%;
+  filter: blur(1px);
+  animation: emphorus-trail-fade 4s cubic-bezier(0.4, 0.0, 0.2, 1) infinite;
+}
+
+.emphorus-motion-box::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  width: 40px;
+  height: 2px;
+  transform: translateY(-50%);
+  background: linear-gradient(to left,
+    rgba(255, 255, 255, 0.6) 0%,
+    rgba(255, 217, 61, 0.5) 30%,
+    rgba(88, 169, 140, 0.3) 60%,
+    transparent 100%
+  );
+  border-radius: 50%;
+  filter: blur(2px);
+  animation: emphorus-trail-fade 4s cubic-bezier(0.4, 0.0, 0.2, 1) infinite;
+}
+
+.emphorus-fireball-core {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: radial-gradient(circle, 
+    rgba(255, 255, 255, 1) 0%, 
+    rgba(255, 217, 61, 0.8) 50%, 
+    transparent 100%
+  );
+  box-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
+  animation: emphorus-sparkle 2s ease-in-out infinite;
+}
+
+/* Animations */
+@keyframes emphorus-stars-twinkle {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 0.4; }
+}
+
+@keyframes emphorus-heartbeat {
+  0%, 100% { transform: scale(1); }
+  10%, 30% { transform: scale(1.1); }
+  20% { transform: scale(0.95); }
+}
+
+@keyframes emphorus-brand-gradient-flow {
+  0% {
+    background-position: 0% center;
+  }
+  50% {
+    background-position: 100% center;
+  }
+  100% {
+    background-position: 0% center;
+  }
+}
+
+@keyframes emphorus-shooting-star {
+  0% { 
+    left: -65px;
+    opacity: 0;
+    transform: translateY(-50%) scale(0.8);
+  }
+  10% {
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
+  }
+  90% {
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
+  }
+  100% { 
+    left: calc(100% + 5px);
+    opacity: 0;
+    transform: translateY(-50%) scale(0.8);
+  }
+}
+
+@keyframes emphorus-trail-fade {
+  0% {
+    opacity: 0;
+    width: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    width: 60px;
+  }
+}
+
+@keyframes emphorus-sparkle {
+  0%, 100% { 
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+  50% { 
+    transform: translate(-50%, -50%) scale(1.5);
+    opacity: 0.8;
+  }
+}
+

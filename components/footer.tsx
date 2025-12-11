@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { Clock3, Mail, MapPin } from "lucide-react"
+import { EmphorusCredit } from "@/components/emphorus-footer-credit"
 
 const navLinks = [
   { label: "Home", href: "/" },
@@ -7,6 +8,7 @@ const navLinks = [
   { label: "Leadership", href: "/about#leadership" },
   { label: "Industries", href: "/courses" },
   { label: "Careers", href: "/contact" },
+  { label: "Cancellation & Refund Policy", href: "/cancellation" },
   { label: "Privacy Policy", href: "/privacy" },
   { label: "Terms & Conditions", href: "/terms" },
 ]
@@ -76,11 +78,14 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-slate-900 pt-8 text-center text-sm text-slate-500">
-          <p>
+        <div className="border-t border-slate-900 pt-8 space-y-4">
+          <p className="text-center text-sm text-slate-500">
             ©{new Date().getFullYear()} Copyright{" "}
             <span className="text-white font-semibold">Upskill Workforce.</span> All Rights Reserved
           </p>
+          <div className="flex justify-center">
+            <EmphorusCredit />
+          </div>
         </div>
       </div>
     </footer>
