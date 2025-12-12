@@ -34,8 +34,8 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} ${robotoMono.variable}`}>
       <head>
         <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, maximum-scale=1.0"/>
-        {/* Paytm JS Script */}
-        <script 
+        {/* Paytm JS Script - Commented out */}
+        {/* <script 
           type="application/javascript" 
           src="https://securegw.paytm.in/merchantpgpui/checkoutjs/merchants/uYTkMQ79093638871742.js" 
           onLoad="onScriptLoad();" 
@@ -65,7 +65,7 @@ export default function RootLayout({
               }
             `,
           }}
-        />
+        /> */}
       </head>
       <body className="font-sans">
         <script

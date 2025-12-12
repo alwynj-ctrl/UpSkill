@@ -9,8 +9,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useState, useEffect } from "react"
-import { submitPaymentForm } from "sabpaisa-pg-dev"
-import { SABPAISA_CONFIG, SABPAISA_STAGING } from "@/lib/sabpaisa"
+// import { submitPaymentForm } from "sabpaisa-pg-dev"
+// import { SABPAISA_CONFIG, SABPAISA_STAGING } from "@/lib/sabpaisa"
 import { useSearchParams, useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 
@@ -499,7 +499,7 @@ export default function PaymentPage() {
     }
   }
 
-  const initiateSabpaisaPayment = async () => {
+  /* const initiateSabpaisaPayment = async () => {
     setIsProcessingPayment(true)
 
     if (!selectedCourse || !userId) {
@@ -568,9 +568,9 @@ export default function PaymentPage() {
       alert("Payment initialization failed. Please try again.")
       setIsProcessingPayment(false)
     }
-  }
+  } */
 
-  const initiatePaytmPayment = async () => {
+  /* const initiatePaytmPayment = async () => {
     setIsProcessingPayment(true)
 
     try {
@@ -647,9 +647,9 @@ export default function PaymentPage() {
       alert("Payment initialization failed. Please try again.")
       setIsProcessingPayment(false)
     }
-  }
+  } */
 
-  const initiatePayUPayment = async () => {
+  /* const initiatePayUPayment = async () => {
     setIsProcessingPayment(true)
 
     try {
@@ -726,9 +726,9 @@ export default function PaymentPage() {
       alert("Payment initialization failed. Please try again.")
       setIsProcessingPayment(false)
     }
-  }
+  } */
 
-  const initiateAirpayPayment = async () => {
+  /* const initiateAirpayPayment = async () => {
     setIsProcessingPayment(true)
 
     if (!selectedCourse || !userId) {
@@ -843,7 +843,7 @@ export default function PaymentPage() {
       alert("Payment initialization failed. Please try again.")
       setIsProcessingPayment(false)
     }
-  }
+  } */
 
   const handlePayment = () => {
     console.log("[v0] Processing payment...", {
@@ -855,7 +855,10 @@ export default function PaymentPage() {
 
     if (paymentMethod === "razorpay") {
       initiateRazorpayPayment()
-    } else if (paymentMethod === "paytm") {
+    } else {
+      alert("Only Razorpay is currently available. Please select Razorpay as your payment method.")
+    }
+    /* } else if (paymentMethod === "paytm") {
       initiatePaytmPayment()
     } else if (paymentMethod === "payu") {
       initiatePayUPayment()
@@ -863,7 +866,7 @@ export default function PaymentPage() {
       initiateAirpayPayment()
     } else {
       initiateSabpaisaPayment()
-    }
+    } */
   }
 
   if (isCheckingAuth) {
@@ -907,7 +910,8 @@ export default function PaymentPage() {
   }
 
   const finalAmount = useCustomAmount ? Number.parseFloat(customAmount) || selectedCourse.price : selectedCourse.price
-  const paymentMethodLabel =
+  const paymentMethodLabel = "Razorpay"
+  /* const paymentMethodLabel =
     paymentMethod === "razorpay"
       ? "Razorpay"
       : paymentMethod === "paytm"
@@ -916,7 +920,7 @@ export default function PaymentPage() {
           ? "PayU"
           : paymentMethod === "airpay"
             ? "Airpay"
-            : "SabPaisa"
+            : "SabPaisa" */
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -1106,7 +1110,7 @@ export default function PaymentPage() {
                 >
                   Razorpay
                 </Button>
-                <Button
+                {/* <Button
                   variant={paymentMethod === "airpay" ? "default" : "outline"}
                   onClick={() => setPaymentMethod("airpay")}
                   className="w-full"
@@ -1135,7 +1139,7 @@ export default function PaymentPage() {
                   className="w-full"
                 >
                   Paytm
-                </Button>
+                </Button> */}
               </div>
             </div>
 

@@ -45,7 +45,7 @@ export default function CancellationPage() {
               </p>
             </div>
 
-            <div>
+            {/* <div>
               <h3 className="text-lg font-semibold mb-4">Contact Information:</h3>
               <p className="text-muted-foreground">
                 For any issues or questions, feel free to reach out to our Customer Support team on this email:
@@ -53,7 +53,7 @@ export default function CancellationPage() {
                   admin@upskillworkforce.co
                 </a>
               </p>
-            </div>
+            </div> */}
           </div>
         </div>
       </section>
