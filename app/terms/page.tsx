@@ -59,7 +59,7 @@ export default function TermsPage() {
               </p>
             </div>
 
-            {/* <div className="space-y-4">
+             <div className="space-y-4">
               <h2 className="text-xl font-bold">Contact Information:</h2>
               <p>
                 For any issues or questions, feel free to reach out to our Customer Support team on this email:
@@ -67,7 +67,7 @@ export default function TermsPage() {
                   admin@upskillworkforce.co
                 </a>
               </p>
-            </div> */}
+            </div>
           </div>
         </div>
       </section>

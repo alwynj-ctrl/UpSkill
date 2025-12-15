@@ -42,7 +42,7 @@ export function Footer() {
                 <p className="text-sm text-slate-400 mt-1">Global Talent & Data Solutions</p>
               </div>
               <div className="space-y-4 text-sm text-slate-300">
-                {/* <div className="flex items-start gap-3">
+                <div className="flex items-start gap-3">
                   <MapPin className="mt-1 h-4 w-4 text-orange-400" />
                   <div>
                     <p>India | USA | UK</p>
@@ -61,7 +61,7 @@ export function Footer() {
                       admin@upskillworkforce.co
                     </a>
                   </div>
-                </div> */}
+                </div>
               </div>
             </div>
           </div>
