@@ -66,6 +66,10 @@ export default function TermsPage() {
                 <a href="mailto:admin@upskillworkforce.co" className="text-primary hover:underline ml-1">
                   admin@upskillworkforce.co
                 </a>
+                {" "}or call us at{" "}
+                <a href="tel:+919513161161" className="text-primary hover:underline">
+                  +91 9513161161
+                </a>
               </p>
             </div>
           </div>

@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Clock3, Mail, MapPin } from "lucide-react"
+import { Clock3, Mail, MapPin, Phone } from "lucide-react"
 import { EmphorusCredit } from "@/components/emphorus-footer-credit"
 
 const navLinks = [
@@ -59,6 +59,18 @@ export function Footer() {
                       className="text-emerald-300 hover:text-emerald-200 transition-colors"
                     >
                       admin@upskillworkforce.co
+                    </a>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Phone className="mt-1 h-4 w-4 text-orange-400" />
+                  <div>
+                    <p className="uppercase text-slate-400 text-xs tracking-[0.3em]">Phone</p>
+                    <a
+                      href="tel:+919513161161"
+                      className="text-emerald-300 hover:text-emerald-200 transition-colors"
+                    >
+                      +91 9513161161
                     </a>
                   </div>
                 </div>
