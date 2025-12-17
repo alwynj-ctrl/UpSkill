@@ -25,7 +25,7 @@ We were using the **OLD** Paytm integration method (direct form POST with checks
 {
   body: {
     requestType: "Payment",
-    mid: "uYTkMQ79093638871742",
+    mid: "YOUR_PAYTM_MID",
     websiteName: "DEFAULT",
     orderId: "ORDER_xxxxx_purchaseId",
     callbackUrl: "https://www.upskillworkforce.co/api/paytm-callback",
@@ -90,7 +90,7 @@ Body:
   "success": true,
   "txnToken": "fe795335ed3049c78a57271075f2199e1526969112097",
   "orderId": "ORDER_123456_789",
-  "mid": "uYTkMQ79093638871742",
+  "mid": "YOUR_PAYTM_MID",
   "amount": "4999"
 }
 ```
@@ -166,8 +166,8 @@ User: Sees payment confirmation
 ## CREDENTIALS (Hardcoded)
 
 ```
-Merchant ID: uYTkMQ79093638871742
-Merchant Key: ycqMGlcTkfycGMps
+Merchant ID: YOUR_PAYTM_MID
+Merchant Key: YOUR_PAYTM_MERCHANT_KEY
 Website: DEFAULT
 Environment: PRODUCTION
 Callback URL: https://www.upskillworkforce.co/api/paytm-callback

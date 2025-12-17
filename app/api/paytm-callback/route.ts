@@ -1,6 +1,14 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { PaytmChecksum } from "@/lib/paytm-checksum"
 import { createClient } from "@/lib/supabase/server"
+import { getPaytmConfig } from "@/lib/paytm-config"
+
+function maybeExpandUuid(compact: string): string {
+  const value = compact.trim()
+  if (value.includes("-")) return value
+  if (!/^[0-9a-fA-F]{32}$/.test(value)) return value
+  return `${value.slice(0, 8)}-${value.slice(8, 12)}-${value.slice(12, 16)}-${value.slice(16, 20)}-${value.slice(20)}`
+}
 
 // Handle GET requests (for debugging)
 export async function GET(request: NextRequest) {
@@ -26,8 +34,7 @@ export async function POST(request: NextRequest) {
 
     console.log("[Paytm Callback] Received params:", JSON.stringify(params, null, 2))
 
-    // Hardcoded Paytm Production Merchant Key
-    const merchantKey = "ycqMGlcTkfycGMps"
+    const paytmConfig = getPaytmConfig(request.nextUrl.origin)
 
     const receivedChecksum = params.CHECKSUMHASH
     if (!receivedChecksum) {
@@ -37,7 +44,7 @@ export async function POST(request: NextRequest) {
 
     delete params.CHECKSUMHASH
 
-    const isValidChecksum = await PaytmChecksum.verifySignature(params, merchantKey, receivedChecksum)
+    const isValidChecksum = await PaytmChecksum.verifySignature(params, paytmConfig.merchantKey, receivedChecksum)
 
     if (!isValidChecksum) {
       console.error("[Paytm Callback] Invalid checksum")
@@ -56,9 +63,10 @@ export async function POST(request: NextRequest) {
       // Update purchase record in database
       const supabase = await createClient()
 
-      // Extract purchase ID from order ID (format: ORDER_timestamp_purchaseId)
+      // Extract purchase ID from order ID (format: O_timestamp_purchaseIdWithoutHyphens OR older formats)
       const parts = orderId.split("_")
-      const purchaseId = parts[parts.length - 1]
+      const purchaseIdRaw = parts[parts.length - 1]
+      const purchaseId = maybeExpandUuid(purchaseIdRaw)
 
       console.log("[Paytm Callback] Updating purchase:", purchaseId)
 

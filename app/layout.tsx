@@ -34,10 +34,10 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} ${robotoMono.variable}`}>
       <head>
         <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, maximum-scale=1.0"/>
-        {/* Paytm JS Script - Commented out */}
+        {/* Paytm JS Script - Commented out (not required for the hosted checkout flow used in /payment) */}
         {/* <script 
           type="application/javascript" 
-          src="https://securegw.paytm.in/merchantpgpui/checkoutjs/merchants/uYTkMQ79093638871742.js" 
+          src="https://securegw.paytm.in/merchantpgpui/checkoutjs/merchants/YOUR_PAYTM_MID.js" 
           onLoad="onScriptLoad();" 
           crossOrigin="anonymous"
         />

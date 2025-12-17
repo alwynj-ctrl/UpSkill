@@ -1,5 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { PaytmChecksum } from "@/lib/paytm-checksum"
+import { getPaytmConfig } from "@/lib/paytm-config"
+
+function compactUuid(uuid: string): string {
+  return uuid.replace(/-/g, "")
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,22 +21,23 @@ export async function POST(request: NextRequest) {
       state,
       pincode,
       purchaseId,
-      returnUrl,
     } = body
 
-    // Hardcoded Paytm Production Credentials
-    const merchantId = "uYTkMQ79093638871742"
-    const merchantKey = "ycqMGlcTkfycGMps"
-    const website = "DEFAULT"
-    
-    // Check if we should use staging or production
-    const isProduction = true // Set to false for staging/testing
-    const paytmBaseUrl = isProduction 
-      ? "https://securegw.paytm.in" 
-      : "https://securestage.paytm.in"
+    const paytmConfig = getPaytmConfig(request.nextUrl.origin)
+    const isProduction = paytmConfig.environment === "production"
+
+    const amountNumber = Number(amount)
+    if (!Number.isFinite(amountNumber) || amountNumber <= 0) {
+      return NextResponse.json({ success: false, error: "Invalid amount" }, { status: 400 })
+    }
 
     // Generate unique order ID
-    const orderId = `ORDER_${Date.now()}_${purchaseId}`
+    // Keep orderId short & Paytm-safe while still reversible to purchaseId.
+    // Format: O_<timestamp>_<purchaseIdWithoutHyphens>  (typically 48 chars)
+    const orderId = `O_${Date.now()}_${compactUuid(String(purchaseId))}`
+
+    // Keep custId simple/minimal; Paytm samples typically require only custId.
+    const custId = `CUST_${compactUuid(String(purchaseId)).slice(0, 28)}`
 
     console.log("[Paytm] Step 1: Initiating transaction for order:", orderId)
 
@@ -39,20 +45,16 @@ export async function POST(request: NextRequest) {
     const paytmParams = {
       body: {
         requestType: "Payment",
-        mid: merchantId,
-        websiteName: website,
+        mid: paytmConfig.mid,
+        websiteName: paytmConfig.website,
         orderId: orderId,
-        callbackUrl: "https://www.upskillworkforce.co/api/paytm-callback",
+        callbackUrl: paytmConfig.callbackUrl,
         txnAmount: {
-          value: amount.toString(),
+          value: amountNumber.toFixed(2),
           currency: "INR",
         },
         userInfo: {
-          custId: email,
-          mobile: phone,
-          email: email,
-          firstName: firstName,
-          lastName: lastName,
+          custId,
         },
       },
     }
@@ -60,7 +62,7 @@ export async function POST(request: NextRequest) {
     // Generate checksum for the request body
     const checksum = await PaytmChecksum.generateSignature(
       JSON.stringify(paytmParams.body),
-      merchantKey
+      paytmConfig.merchantKey
     )
 
     const requestBody = {
@@ -71,12 +73,15 @@ export async function POST(request: NextRequest) {
     }
 
     console.log("[Paytm] Calling Initiate Transaction API...")
-    console.log("[Paytm] Request URL:", `https://securegw.paytm.in/theia/api/v1/initiateTransaction?mid=${merchantId}&orderId=${orderId}`)
+    console.log(
+      "[Paytm] Request URL:",
+      `${paytmConfig.baseUrl}/theia/api/v1/initiateTransaction?mid=${paytmConfig.mid}&orderId=${orderId}`
+    )
     console.log("[Paytm] Request Body:", JSON.stringify(requestBody, null, 2))
 
     // Step 2: Call Initiate Transaction API
     const initiateResponse = await fetch(
-      `${paytmBaseUrl}/theia/api/v1/initiateTransaction?mid=${merchantId}&orderId=${orderId}`,
+      `${paytmConfig.baseUrl}/theia/api/v1/initiateTransaction?mid=${paytmConfig.mid}&orderId=${orderId}`,
       {
         method: "POST",
         headers: {
@@ -96,10 +101,14 @@ export async function POST(request: NextRequest) {
       !initiateResult.body.txnToken
     ) {
       console.error("[Paytm] Failed to initiate transaction:", initiateResult)
-      return NextResponse.json({
-        success: false,
-        error: initiateResult.body?.resultInfo?.resultMsg || "Failed to initiate payment",
-      })
+      return NextResponse.json(
+        {
+          success: false,
+          error: initiateResult.body?.resultInfo?.resultMsg || "Failed to initiate payment",
+          resultCode: initiateResult.body?.resultInfo?.resultCode,
+        },
+        { status: 502 }
+      )
     }
 
     const txnToken = initiateResult.body.txnToken
@@ -111,7 +120,7 @@ export async function POST(request: NextRequest) {
       success: true,
       txnToken: txnToken,
       orderId: orderId,
-      mid: merchantId,
+      mid: paytmConfig.mid,
       amount: amount.toString(),
       isProduction: isProduction,
     })

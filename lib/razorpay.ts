@@ -1,23 +1,15 @@
 import Razorpay from "razorpay"
 import crypto from "crypto"
 
-const RAZORPAY_KEY_ID = "rzp_live_RhAomknCi1cKEB"
-const RAZORPAY_KEY_SECRET = "FZJsEy7EeMtqE8LmvrprDfjF"
+const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID
+const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET
 
 let razorpayClient: Razorpay | null = null
 
 function assertConfig() {
   if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) {
-    console.error("[Razorpay Config] Missing credentials:")
-    console.error("  RAZORPAY_KEY_ID:", RAZORPAY_KEY_ID ? "✓ Present" : "✗ Missing")
-    console.error("  RAZORPAY_KEY_SECRET:", RAZORPAY_KEY_SECRET ? "✓ Present" : "✗ Missing")
     throw new Error("Missing Razorpay configuration. Please set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in .env file.")
   }
-  
-  // Log key format for debugging (first 10 chars only for security)
-  console.log("[Razorpay Config] Credentials loaded:")
-  console.log("  Key ID format:", RAZORPAY_KEY_ID.substring(0, 10) + "...")
-  console.log("  Key Secret format:", RAZORPAY_KEY_SECRET.substring(0, 10) + "...")
 }
 
 function getClient(): Razorpay {
@@ -71,13 +63,13 @@ export function verifyRazorpaySignature({
 }) {
   assertConfig()
 
-  const expected = crypto.createHmac("sha256", RAZORPAY_KEY_SECRET!).update(`${orderId}|${paymentId}`).digest("hex")
+  const expected = crypto.createHmac("sha256", RAZORPAY_KEY_SECRET).update(`${orderId}|${paymentId}`).digest("hex")
   return expected === signature
 }
 
 export function getRazorpayKeyId() {
   assertConfig()
-  return RAZORPAY_KEY_ID!
+  return RAZORPAY_KEY_ID
 }
 
 

@@ -1,12 +1,8 @@
 # Paytm Payment Gateway Configuration
 
-## ✅ FIXED - Credentials Hardcoded
+## ✅ Configuration (Env-based)
 
-Paytm production credentials are now **hardcoded** in the API routes:
-- Merchant ID: `uYTkMQ79093638871742`
-- Merchant Key: `ycqMGlcTkfycGMps`
-- Environment: **PRODUCTION**
-- Callback URL: `https://www.upskillworkforce.co/api/paytm-response`
+Paytm credentials are **NOT hardcoded** in the codebase. Set them via environment variables.
 
 ## What's Happening
 
@@ -30,12 +26,16 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 # Change to https://www.upskillworkforce.co in production
 
 # Paytm Credentials (REQUIRED - GET THESE FROM PAYTM)
-PAYTM_MERCHANT_ID=your_merchant_id_here
-PAYTM_MERCHANT_KEY=your_merchant_key_here
+PAYTM_MERCHANT_ID=YOUR_PAYTM_MID
+PAYTM_MERCHANT_KEY=YOUR_PAYTM_MERCHANT_KEY
 PAYTM_WEBSITE=DEFAULT
 PAYTM_INDUSTRY_TYPE=Retail
 PAYTM_CHANNEL_ID=WEB
 PAYTM_ENVIRONMENT=staging
+
+# Optional (recommended for production)
+# If not set, the app will derive it from NEXT_PUBLIC_SITE_URL.
+PAYTM_CALLBACK_URL=https://your-domain.com/api/paytm-callback
 ```
 
 ## How to Get Paytm Credentials

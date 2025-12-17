@@ -63,7 +63,7 @@ You need to verify with Paytm:
    - Verify KYC is complete
 
 2. **Are these production credentials?**
-   - MID: `uYTkMQ79093638871742`
+   - MID: `YOUR_PAYTM_MID`
    - Website: `DEFAULT`
    - Confirm these are for production use
 
@@ -83,8 +83,8 @@ If you don't have activated production account:
 
 ```typescript
 // Credentials (Hardcoded)
-Merchant ID: uYTkMQ79093638871742
-Merchant Key: ycqMGlcTkfycGMps
+Merchant ID: YOUR_PAYTM_MID
+Merchant Key: YOUR_PAYTM_MERCHANT_KEY
 Website: DEFAULT
 Environment: PRODUCTION (can toggle)
 

@@ -52,8 +52,8 @@ Added `/paytm/*` to the exclusion list - **NO AUTH CHECKS**
 2. ✅ Frontend calls `/api/paytm-payment`
 3. ✅ Backend creates purchase record (status: pending)
 4. ✅ Backend generates checksum with hardcoded credentials:
-   - MID: `uYTkMQ79093638871742`
-   - KEY: `ycqMGlcTkfycGMps`
+   - MID: `YOUR_PAYTM_MID`
+   - KEY: `YOUR_PAYTM_MERCHANT_KEY`
 5. ✅ User redirected to `https://securegw.paytm.in/order/process`
 6. ✅ User completes payment on Paytm
 7. ✅ Paytm POSTs to `https://www.upskillworkforce.co/api/paytm-callback`
