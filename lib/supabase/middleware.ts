@@ -30,9 +30,8 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   // Redirect to login if accessing protected routes without authentication
-  // Completely exclude ALL /payment/*, /paytm/*, /payu/* routes and API routes from auth checks
-  const isPaymentRoute = request.nextUrl.pathname.startsWith("/payment") || 
-                         request.nextUrl.pathname.startsWith("/paytm") ||
+  // Completely exclude ALL /payment/* and /payu/* routes and API routes from auth checks
+  const isPaymentRoute = request.nextUrl.pathname.startsWith("/payment") ||
                          request.nextUrl.pathname.startsWith("/payu")
   const isApiRoute = request.nextUrl.pathname.startsWith("/api/")
   

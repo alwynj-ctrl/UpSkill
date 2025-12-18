@@ -242,7 +242,7 @@ export default function PaymentPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isCheckingAuth, setIsCheckingAuth] = useState(true)
   const [userId, setUserId] = useState(null)
-  const [paymentMethod, setPaymentMethod] = useState("payu")
+  const [paymentMethod, setPaymentMethod] = useState<"payu" | "upskill">("payu")
   const [isProcessingPayment, setIsProcessingPayment] = useState(false)
   const [hasAcceptedTerms, setHasAcceptedTerms] = useState(false)
   const [formData, setFormData] = useState({
@@ -313,7 +313,7 @@ export default function PaymentPage() {
     return `+91${trimmed}`
   }
 
-  // Razorpay disabled (switched to Paytm)
+  // Razorpay disabled
 
   /* const initiateSabpaisaPayment = async () => {
     setIsProcessingPayment(true)
@@ -385,90 +385,6 @@ export default function PaymentPage() {
       setIsProcessingPayment(false)
     }
   } */
-
-  const initiatePaytmPayment = async () => {
-    setIsProcessingPayment(true)
-
-    if (!selectedCourse || !userId) {
-      alert("Missing required information")
-      setIsProcessingPayment(false)
-      return
-    }
-
-    try {
-      const currentAmount = useCustomAmount ? Number.parseFloat(customAmount) || selectedCourse.price : selectedCourse.price
-
-      const supabase = createClient()
-      const { data: purchaseData, error: purchaseError } = await supabase
-        .from("purchases")
-        .insert({
-          user_id: userId,
-          course_name: selectedCourse.title,
-          course_price: currentAmount,
-          payment_status: "pending",
-        })
-        .select()
-        .single()
-
-      if (purchaseError) {
-        console.error("[Paytm] Error creating purchase record:", purchaseError)
-        alert("Failed to create purchase record. Please try again.")
-        setIsProcessingPayment(false)
-        return
-      }
-
-      const response = await fetch("/api/paytm-payment", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          amount: currentAmount,
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          phone: formData.phone,
-          productInfo: selectedCourse.title,
-          address: formData.address,
-          city: formData.city,
-          state: formData.state,
-          pincode: formData.pincode,
-          purchaseId: purchaseData.id,
-        }),
-      })
-
-      const result = await response.json()
-
-      if (!response.ok || !result.success) {
-        alert(result.error || "Payment initialization failed. Please try again.")
-        setIsProcessingPayment(false)
-        return
-      }
-
-      console.log("[Paytm] Transaction initiated, txnToken:", result.txnToken)
-
-      // Redirect to Paytm payment page
-      const paytmBaseUrl = result.isProduction ? "https://securegw.paytm.in" : "https://securestage.paytm.in"
-      const paytmForm = document.createElement("form")
-      paytmForm.method = "POST"
-      paytmForm.action = `${paytmBaseUrl}/theia/api/v1/showPaymentPage?mid=${result.mid}&orderId=${result.orderId}`
-      paytmForm.style.display = "none"
-
-      // Add txnToken as hidden field
-      const tokenInput = document.createElement("input")
-      tokenInput.type = "hidden"
-      tokenInput.name = "txnToken"
-      tokenInput.value = result.txnToken
-      paytmForm.appendChild(tokenInput)
-
-      document.body.appendChild(paytmForm)
-      paytmForm.submit()
-    } catch (error) {
-      console.error("[Paytm] Payment error:", error)
-      alert("Payment initialization failed. Please try again.")
-      setIsProcessingPayment(false)
-    }
-  }
 
   const initiatePayUPayment = async () => {
     setIsProcessingPayment(true)
@@ -682,12 +598,10 @@ export default function PaymentPage() {
       userDetails: formData,
     })
 
-    if (paymentMethod === "paytm") {
-      initiatePaytmPayment()
-    } else if (paymentMethod === "payu") {
+    if (paymentMethod === "payu") {
       initiatePayUPayment()
-    } else {
-      alert("Please select a payment method.")
+    } else if (paymentMethod === "upskill") {
+      alert("Upskill Pay is not configured yet. Please switch to PayU for now.")
     }
   }
 
@@ -732,7 +646,7 @@ export default function PaymentPage() {
   }
 
   const finalAmount = useCustomAmount ? Number.parseFloat(customAmount) || selectedCourse.price : selectedCourse.price
-  const paymentMethodLabel = "PayU"
+  const paymentMethodLabel = paymentMethod === "upskill" ? "Upskill Pay" : "PayU"
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -912,7 +826,9 @@ export default function PaymentPage() {
             <div className="space-y-3 border-t pt-4">
               <div className="space-y-1">
                 <Label className="text-base font-medium">Payment Method</Label>
-                <p className="text-xs text-slate-500">Paytm is temporarily disabled. Please use PayU.</p>
+                <p className="text-xs text-slate-500">
+                  Choose between our PayU gateway and Upskill Pay (internal payment option).
+                </p>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 <Button
@@ -921,6 +837,13 @@ export default function PaymentPage() {
                   className="w-full"
                 >
                   PayU
+                </Button>
+                <Button
+                  variant={paymentMethod === "upskill" ? "default" : "outline"}
+                  onClick={() => setPaymentMethod("upskill")}
+                  className="w-full"
+                >
+                  Upskill Pay
                 </Button>
               </div>
             </div>

@@ -45,7 +45,8 @@ export async function POST(request: NextRequest) {
       const failureUrl = new URL("/payu/failure", request.url)
       failureUrl.searchParams.set("error", "Invalid hash")
       failureUrl.searchParams.set("txnid", params.txnid || "")
-      return NextResponse.redirect(failureUrl)
+      // Use 303 so the browser switches to GET when redirecting from the POST callback
+      return NextResponse.redirect(failureUrl, 303)
     }
 
     console.log("[PayU Callback] Hash verified successfully")
@@ -83,7 +84,8 @@ export async function POST(request: NextRequest) {
       successUrl.searchParams.set("mihpayid", mihpayid || "")
       successUrl.searchParams.set("amount", amount)
       successUrl.searchParams.set("mode", params.mode || "")
-      return NextResponse.redirect(successUrl)
+      // Use 303 so the browser issues a GET to the success page instead of repeating the POST
+      return NextResponse.redirect(successUrl, 303)
     } else {
       // Payment failed or pending
       const failureUrl = new URL("/payu/failure", request.url)
@@ -91,7 +93,8 @@ export async function POST(request: NextRequest) {
       failureUrl.searchParams.set("status", status || "failed")
       failureUrl.searchParams.set("error", params.error || "")
       failureUrl.searchParams.set("error_Message", params.error_Message || "Payment failed")
-      return NextResponse.redirect(failureUrl)
+      // Use 303 so the browser issues a GET when redirecting to the failure page
+      return NextResponse.redirect(failureUrl, 303)
     }
   } catch (error) {
     console.error("[PayU Callback] ===== CRITICAL ERROR =====")
@@ -100,7 +103,8 @@ export async function POST(request: NextRequest) {
     const failureUrl = new URL("/payu/failure", request.url)
     failureUrl.searchParams.set("error", "Processing error")
     failureUrl.searchParams.set("details", error instanceof Error ? error.message : "Unknown error")
-    return NextResponse.redirect(failureUrl)
+    // Use 303 so the browser switches to GET on error redirect as well
+    return NextResponse.redirect(failureUrl, 303)
   }
 }
 
