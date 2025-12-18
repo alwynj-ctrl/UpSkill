@@ -242,7 +242,7 @@ export default function PaymentPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isCheckingAuth, setIsCheckingAuth] = useState(true)
   const [userId, setUserId] = useState(null)
-  const [paymentMethod, setPaymentMethod] = useState("paytm")
+  const [paymentMethod, setPaymentMethod] = useState("payu")
   const [isProcessingPayment, setIsProcessingPayment] = useState(false)
   const [hasAcceptedTerms, setHasAcceptedTerms] = useState(false)
   const [formData, setFormData] = useState({
@@ -470,8 +470,14 @@ export default function PaymentPage() {
     }
   }
 
-  /* const initiatePayUPayment = async () => {
+  const initiatePayUPayment = async () => {
     setIsProcessingPayment(true)
+
+    if (!selectedCourse || !userId) {
+      alert("Missing required information")
+      setIsProcessingPayment(false)
+      return
+    }
 
     try {
       const currentAmount = useCustomAmount ? Number.parseFloat(customAmount) || selectedCourse.price : selectedCourse.price
@@ -517,13 +523,15 @@ export default function PaymentPage() {
 
       const result = await response.json()
 
-      if (!result.success) {
+      if (!response.ok || !result.success) {
         alert(result.error || "Payment initialization failed. Please try again.")
         setIsProcessingPayment(false)
         return
       }
 
       console.log("[PayU] Payment initialized successfully")
+      console.log("[PayU] Transaction ID:", result.paymentData.txnid)
+      console.log("[PayU] Hash:", result.paymentData.hash)
 
       // Create and submit form to PayU
       const payuForm = document.createElement("form")
@@ -547,7 +555,7 @@ export default function PaymentPage() {
       alert("Payment initialization failed. Please try again.")
       setIsProcessingPayment(false)
     }
-  } */
+  }
 
   /* const initiateAirpayPayment = async () => {
     setIsProcessingPayment(true)
@@ -676,19 +684,11 @@ export default function PaymentPage() {
 
     if (paymentMethod === "paytm") {
       initiatePaytmPayment()
-      return
-    }
-
-    alert("Only Paytm is currently available. Please select Paytm as your payment method.")
-    /* } else if (paymentMethod === "paytm") {
-      initiatePaytmPayment()
     } else if (paymentMethod === "payu") {
       initiatePayUPayment()
-    } else if (paymentMethod === "airpay") {
-      initiateAirpayPayment()
     } else {
-      initiateSabpaisaPayment()
-    } */
+      alert("Please select a payment method.")
+    }
   }
 
   if (isCheckingAuth) {
@@ -732,7 +732,7 @@ export default function PaymentPage() {
   }
 
   const finalAmount = useCustomAmount ? Number.parseFloat(customAmount) || selectedCourse.price : selectedCourse.price
-  const paymentMethodLabel = paymentMethod === "paytm" ? "Paytm" : "Paytm"
+  const paymentMethodLabel = "PayU"
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -912,23 +912,9 @@ export default function PaymentPage() {
             <div className="space-y-3 border-t pt-4">
               <div className="space-y-1">
                 <Label className="text-base font-medium">Payment Method</Label>
-                <p className="text-xs text-slate-500">Choose your preferred gateway.</p>
+                <p className="text-xs text-slate-500">Paytm is temporarily disabled. Please use PayU.</p>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                <Button
-                  variant={paymentMethod === "paytm" ? "default" : "outline"}
-                  onClick={() => setPaymentMethod("paytm")}
-                  className="w-full"
-                >
-                  Paytm
-                </Button>
-                {/* <Button
-                  variant={paymentMethod === "airpay" ? "default" : "outline"}
-                  onClick={() => setPaymentMethod("airpay")}
-                  className="w-full"
-                >
-                  Airpay
-                </Button>
                 <Button
                   variant={paymentMethod === "payu" ? "default" : "outline"}
                   onClick={() => setPaymentMethod("payu")}
@@ -936,15 +922,6 @@ export default function PaymentPage() {
                 >
                   PayU
                 </Button>
-                <Button
-                  disabled
-                  variant={paymentMethod === "sabpaisa" ? "default" : "outline"}
-                  onClick={() => setPaymentMethod("sabpaisa")}
-                  className="w-full"
-                >
-                  SabPaisa
-                </Button>
-                */}
               </div>
             </div>
 

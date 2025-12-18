@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     } = body
 
     const config = getPayUConfig()
-    const txnid = generateTxnId("UPSKILL")
+    const txnid = generateTxnId("TXN")
 
     console.log("[PayU] Initiating payment:", {
       txnid,
@@ -70,7 +70,28 @@ export async function POST(request: NextRequest) {
       salt: config.salt,
     })
 
+    // Debug: Log hash string (remove in production or use environment variable)
+    if (process.env.NODE_ENV === "development") {
+      const hashString = [
+        config.key,
+        payuParams.txnid,
+        payuParams.amount,
+        payuParams.productinfo,
+        payuParams.firstname,
+        payuParams.email,
+        payuParams.udf1 || "",
+        payuParams.udf2 || "",
+        payuParams.udf3 || "",
+        payuParams.udf4 || "",
+        payuParams.udf5 || "",
+        "", "", "", "", "",
+        config.salt,
+      ].join("|")
+      console.log("[PayU DEBUG] Hash String:", hashString)
+    }
+
     console.log("[PayU] Hash generated successfully")
+    console.log("[PayU] Transaction ID:", payuParams.txnid)
 
     // Return payment data for form submission
     return NextResponse.json({

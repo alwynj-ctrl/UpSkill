@@ -20,8 +20,9 @@ export const PAYU_ENV = process.env.PAYU_ENVIRONMENT === "production" ? "PRODUCT
 export const getPayUConfig = () => PAYU_CONFIG[PAYU_ENV]
 
 /**
- * Generate PayU Hash
+ * Generate PayU Hash (Nonseamless Flow - Standard Hash Type)
  * Formula: sha512(key|txnid|amount|productinfo|firstname|email|udf1|udf2|udf3|udf4|udf5||||||SALT)
+ * Matches PayU Payment Hub generated code format
  */
 export function generatePayUHash(params: {
   key: string
@@ -52,8 +53,26 @@ export function generatePayUHash(params: {
     salt,
   } = params
 
-  // Hash sequence for request
-  const hashString = `${key}|${txnid}|${amount}|${productinfo}|${firstname}|${email}|${udf1}|${udf2}|${udf3}|${udf4}|${udf5}||||||${salt}`
+  // Build hash string in PayU format for Nonseamless flow (using array join like reference)
+  const hashString = [
+    key,
+    txnid,
+    amount,
+    productinfo,
+    firstname,
+    email,
+    udf1,
+    udf2,
+    udf3,
+    udf4,
+    udf5,
+    "", // Empty field 6
+    "", // Empty field 7
+    "", // Empty field 8
+    "", // Empty field 9
+    "", // Empty field 10
+    salt,
+  ].join("|")
 
   return crypto.createHash("sha512").update(hashString).digest("hex")
 }
@@ -104,9 +123,12 @@ export function verifyPayUResponseHash(params: {
 }
 
 /**
- * Generate unique transaction ID
+ * Generate unique transaction ID with random component
+ * Format: TXN{timestamp}{random} (matches PayU Payment Hub format)
  */
 export function generateTxnId(prefix: string = "TXN"): string {
-  return `${prefix}_${Date.now()}_${Math.random().toString(36).substring(7)}`
+  const timestamp = Date.now()
+  const random = Math.floor(Math.random() * 10000)
+  return `${prefix}${timestamp}${random}`
 }
 
